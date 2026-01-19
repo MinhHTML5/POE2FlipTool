@@ -88,16 +88,21 @@ namespace POE2FlipTool.Utilities
 
         public Bitmap PrintScreenAt(Point topPosition, Point bottomPosition)
         {
-            int width = topPosition.X - bottomPosition.X;
-            int height = topPosition.Y - bottomPosition.Y;
-            _graphics.CopyFromScreen(
+            int width = bottomPosition.X - topPosition.X;
+            int height = bottomPosition.Y - topPosition.Y;
+
+            Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format32bppArgb);
+            Graphics graphics = Graphics.FromImage(bitmap);
+
+            graphics.CopyFromScreen(
                 topPosition.X,
                 topPosition.Y,
-                width,
-                height,
-                singlePixelSize
+                0,
+                0,
+                new Size(width, height)
             );
-            return _bitmap;
+
+            return bitmap;
         }
 
 

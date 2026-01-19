@@ -1,50 +1,396 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
+﻿using POE2FlipTool.DataModel;
 using POE2FlipTool.Utilities;
+using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
+using System.Globalization;
+
 
 namespace POE2FlipTool.Modules
 {
-    internal class PricingChecker
+    interface ICommand
     {
-        public const float OCR_TOP_X = 0.28945312f;
-        public const float OCR_TOP_Y = 0.17222223f;
-        public const float OCR_BOTTOM_X = 0.35664064f;
-        public const float OCR_BOTTOM_Y = 0.18888889f;
+        bool Execute();
+    }
+
+    class DelayCommand : ICommand
+    {
+        private readonly int _delayMs;
+        private DateTime _start;
+
+        public DelayCommand(int delayMs)
+        {
+            _delayMs = delayMs;
+        }
+
+        public bool Execute()
+        {
+            if (_start == default)
+                _start = DateTime.Now;
+
+            return (DateTime.Now - _start).TotalMilliseconds >= _delayMs;
+        }
+    }
+
+    class ActionCommand : ICommand
+    {
+        private readonly Action _action;
+        private bool _done;
+
+        public ActionCommand(Action action)
+        {
+            _action = action;
+        }
+
+        public bool Execute()
+        {
+            if (_done) return true;
+
+            _action();
+            _done = true;
+            return true;
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public class PricingChecker
+    {
+        public const int SLEEP_TIME = 200;
+        public const int SLEEP_TIME_WAIT = 500;
+
+        public PointF OCR_TOP = new PointF(0.28945312f, 0.17222223f);
+        public PointF OCR_BOTTOM = new PointF(0.35664064f, 0.192f);
+        public PointF I_WANT = new PointF(0.19f, 0.22f);
+        public PointF I_HAVE = new PointF(0.44f, 0.22f);
+        public PointF REGEX = new PointF(0.36f, 0.87f);
+
+        public PointF[] ITEM_SELECT = new PointF[]
+        {
+            new PointF(0.273f, 0.184f),
+            new PointF(0.375f, 0.184f),
+            new PointF(0.473f, 0.184f)
+        };
+
+        public PointF[] CATEGORY_COORD = new PointF[(int)ItemCategory.Count];
+        public float CATEGORY_HAVE_OFFSET_Y = 0.037f;
+
+        public const int SELL_FOR_DIVINE_Y = 11;
+        public const int BUY_WITH_EXALT_Y = 13;
+        public const int BUY_WITH_CHAOS_Y = 36;
+        public const int BUY_WITH_DIVINE_Y = 30;
+        public const int SELL_FOR_EXALT_Y = 32;
+        public const int SELL_FOR_CHAOS_Y = 35;
+
+        public const int BLACK_AND_WHITE_THRESHOLD = 100;
+
 
 
         private Point _ocrTopPoint = new Point();
         private Point _ocrBottomPoint = new Point();
+        private Point _iWantPoint = new Point();
+        private Point _iHavePoint = new Point();
+        private Point _regexPoint = new Point();
 
+        private Point[] _categoryPoint = new Point[(int)ItemCategory.Count];
+        private Point[] _itemSelectPoint = new Point[3];
+
+        private int _categoryHaveOffsetY = 0;
 
         public Main _main;
         public WindowsUtil _windowsUtil;
         public InputHook _inputHook;
         public ColorUtil _colorUtil;
+        public GoogleSheetUpdater _googleSheetUpdater;
 
-        public PricingChecker(Main main, WindowsUtil windowsUtil, InputHook inputHook, ColorUtil colorUtil) 
+        public TradeItem itemExaltedOrb = new TradeItem(ItemCategory.Currency, "Exalted Orb", 0, "B");
+        public TradeItem itemChaosOrb = new TradeItem(ItemCategory.Currency, "Chaos Orb", 0, "B");
+        public TradeItem itemDivineOrb = new TradeItem(ItemCategory.Currency, "Divine Orb", 1, "B");
+
+
+
+
+        private bool _started = false;
+        private Queue<ICommand> _commandQueue = new();
+
+        public PricingChecker(Main main, WindowsUtil windowsUtil, InputHook inputHook, ColorUtil colorUtil, GoogleSheetUpdater googleSheetUpdater)
         {
+            CATEGORY_COORD[(int)ItemCategory.Currency] = new PointF(0.136f, 0.226f);
+            CATEGORY_COORD[(int)ItemCategory.Essences] = new PointF(0.136f, 0.264f);
+            CATEGORY_COORD[(int)ItemCategory.Delirium] = new PointF(0.136f, 0.299f);
+            CATEGORY_COORD[(int)ItemCategory.Breach] = new PointF(0.136f, 0.336f);
+            CATEGORY_COORD[(int)ItemCategory.Ritual] = new PointF(0.136f, 0.377f);
+            CATEGORY_COORD[(int)ItemCategory.Expedition] = new PointF(0.136f, 0.416f);
+            CATEGORY_COORD[(int)ItemCategory.Abyss] = new PointF(0.136f, 0.451f);
+            CATEGORY_COORD[(int)ItemCategory.Incursion] = new PointF(0.136f, 0.491f);
+            CATEGORY_COORD[(int)ItemCategory.Fragments] = new PointF(0.136f, 0.524f);
+            CATEGORY_COORD[(int)ItemCategory.Runes] = new PointF(0.136f, 0.562f);
+            CATEGORY_COORD[(int)ItemCategory.SoulCores] = new PointF(0.136f, 0.6f);
+            CATEGORY_COORD[(int)ItemCategory.Idols] = new PointF(0.136f, 0.637f);
+            CATEGORY_COORD[(int)ItemCategory.UncutGems] = new PointF(0.136f, 0.676f);
+            CATEGORY_COORD[(int)ItemCategory.Gems] = new PointF(0.136f, 0.709f);
+
             _main = main;
             _windowsUtil = windowsUtil;
             _inputHook = inputHook;
             _colorUtil = colorUtil;
+            _googleSheetUpdater = googleSheetUpdater;
         }
 
-        public async void StartCheck()
+        public void Init()
         {
-            Bitmap bitmap = _colorUtil.PrintScreenAt(_ocrTopPoint, _ocrBottomPoint);
+            _ocrTopPoint = _colorUtil.GetPixelPosition(OCR_TOP.X, OCR_TOP.Y);
+            _ocrBottomPoint = _colorUtil.GetPixelPosition(OCR_BOTTOM.X, OCR_BOTTOM.Y);
+            _iWantPoint = _colorUtil.GetPixelPosition(I_WANT.X, I_WANT.Y);
+            _iHavePoint = _colorUtil.GetPixelPosition(I_HAVE.X, I_HAVE.Y);
+            _regexPoint = _colorUtil.GetPixelPosition(REGEX.X, REGEX.Y);
+
+            for (int i = 0; i < (int)ItemCategory.Count; i++)
+            {
+                _categoryPoint[i] = _colorUtil.GetPixelPosition(CATEGORY_COORD[i].X, CATEGORY_COORD[i].Y);
+            }
+            for (int i = 0; i < 3; i++)
+            {
+                _itemSelectPoint[i] = _colorUtil.GetPixelPosition(ITEM_SELECT[i].X, ITEM_SELECT[i].Y);
+            }
+            _categoryHaveOffsetY = _colorUtil.GetPixelPosition(0, CATEGORY_HAVE_OFFSET_Y).Y;
+        }
+
+
+
+        public void MainLoop(int deltaTime)
+        {
             try
             {
-                string temp = await OCRUtil.OCRAsync(bitmap);
+                if (_commandQueue.Count == 0)
+                    return;
 
+                ICommand cmd = _commandQueue.Peek();
+
+                if (cmd.Execute())
+                    _commandQueue.Dequeue();
             }
             catch (Exception ex)
             {
-
+                _commandQueue.Clear();
+                _main.Stop();
+                _main.SetErrorMessage(ex.Message);
             }
+        }
+
+        public void Stop()
+        {
+            _commandQueue.Clear();
+            //_main.Stop(); - Never, never, ever, call this. It will cause a stack overflow.
+        }
+        public void Start()
+        {
+            _started = true;
+            List<TradeItem> items = ConfigReader.ReadConfig();
+
+            // Here is where the check script begin
+            // Update div -> exalt value
+            ClickWantHave(itemExaltedOrb, itemDivineOrb);
+            Sleep(SLEEP_TIME_WAIT);
+            ScreenShotAndUpdateGoogleSheet("B1");
+
+            // Update div -> chaos value
+            ClickWantHave(itemChaosOrb, itemDivineOrb);
+            Sleep(SLEEP_TIME_WAIT);
+            ScreenShotAndUpdateGoogleSheet("B2");
+
+            // Go through each trade item and update trading value
+            for(int i = 0; i < items.Count; i++)
+            {
+                TradeItem tradeItem = items[i];
+
+                // The code below is not inversed. For example, if we want to sell for divine
+                // We search for "I want tradeItem" and "I have divine" to get the lowest price
+                // someone else are willing to sell. That means we can sell around that price to.
+
+                ClickWantHave(tradeItem, itemDivineOrb);
+                Sleep(SLEEP_TIME_WAIT);
+                ScreenShotAndUpdateGoogleSheet(tradeItem.column + SELL_FOR_DIVINE_Y, true);
+
+                ClickWantHave(itemExaltedOrb, tradeItem);
+                Sleep(SLEEP_TIME_WAIT);
+                ScreenShotAndUpdateGoogleSheet(tradeItem.column + BUY_WITH_EXALT_Y);
+
+                ClickWantHave(itemChaosOrb, tradeItem);
+                Sleep(SLEEP_TIME_WAIT);
+                ScreenShotAndUpdateGoogleSheet(tradeItem.column + BUY_WITH_CHAOS_Y);
+
+                ClickWantHave(itemDivineOrb, tradeItem);
+                Sleep(SLEEP_TIME_WAIT);
+                ScreenShotAndUpdateGoogleSheet(tradeItem.column + BUY_WITH_DIVINE_Y);
+
+                ClickWantHave(tradeItem, itemExaltedOrb);
+                Sleep(SLEEP_TIME_WAIT);
+                ScreenShotAndUpdateGoogleSheet(tradeItem.column + SELL_FOR_EXALT_Y, true);
+
+                ClickWantHave(tradeItem, itemChaosOrb);
+                Sleep(SLEEP_TIME_WAIT);
+                ScreenShotAndUpdateGoogleSheet(tradeItem.column + SELL_FOR_CHAOS_Y, true);
+            }
+        }
+
+
+        
+
+        public void ClickWantHave(TradeItem want, TradeItem have) 
+        {
+            Sleep(SLEEP_TIME);
+            // ================================================================================================================
+            MoveMouse(_iWantPoint.X, _iWantPoint.Y);
+            Sleep(SLEEP_TIME);
+            SendLeftClick();
+            Sleep(SLEEP_TIME);
+            // ================================================================================================================
+            MoveMouse(_categoryPoint[(int)want.category].X, _categoryPoint[(int)want.category].Y);
+            Sleep(SLEEP_TIME);
+            SendLeftClick();
+            Sleep(SLEEP_TIME);
+            // ================================================================================================================
+            MoveMouse(_regexPoint.X, _regexPoint.Y);
+            Sleep(SLEEP_TIME);
+            SendLeftClick();
+            Sleep(SLEEP_TIME);
+            // ================================================================================================================
+            TypeItemName(want.name);
+            Sleep(SLEEP_TIME);
+            // ================================================================================================================
+            MoveMouse(_itemSelectPoint[want.itemSelectIndex].X, _itemSelectPoint[want.itemSelectIndex].Y);
+            Sleep(SLEEP_TIME);
+            SendLeftClick();
+            Sleep(SLEEP_TIME);
+            // ================================================================================================================
+
+
+            // ================================================================================================================
+            MoveMouse(_iHavePoint.X, _iHavePoint.Y);
+            Sleep(SLEEP_TIME);
+            SendLeftClick();
+            Sleep(SLEEP_TIME);
+            // ================================================================================================================
+            MoveMouse(_categoryPoint[(int)have.category].X, _categoryPoint[(int)have.category].Y + _categoryHaveOffsetY);
+            Sleep(SLEEP_TIME);
+            SendLeftClick();
+            Sleep(SLEEP_TIME);
+            // ================================================================================================================
+            MoveMouse(_regexPoint.X, _regexPoint.Y);
+            Sleep(SLEEP_TIME);
+            SendLeftClick();
+            Sleep(SLEEP_TIME);
+            // ================================================================================================================
+            TypeItemName(have.name);
+            Sleep(SLEEP_TIME);
+            // ================================================================================================================
+            MoveMouse(_itemSelectPoint[have.itemSelectIndex].X, _itemSelectPoint[have.itemSelectIndex].Y);
+            Sleep(SLEEP_TIME);
+            SendLeftClick();
+            Sleep(SLEEP_TIME);
+            // ================================================================================================================
+        }
+
+        public void Sleep(int milliseconds)
+        {
+            _commandQueue.Enqueue(new DelayCommand(milliseconds));
+        }
+
+        public void MoveMouse(int x, int y)
+        {
+            _commandQueue.Enqueue(new ActionCommand(() => _inputHook.MoveMouse(x, y)));
+        }
+
+        public void SendLeftClick()
+        {
+            _commandQueue.Enqueue(new ActionCommand(() => _inputHook.SendLeftClick()));
+        }
+
+        public void TypeItemName(string name)
+        {
+            _commandQueue.Enqueue(new ActionCommand(() => Clipboard.SetText(name)));
+            _commandQueue.Enqueue(new ActionCommand(() => _inputHook.PressKey(Keys.V, true)));
+        }
+
+        
+        public void ScreenShotAndUpdateGoogleSheet(string cell, bool inverseScreenShotValue = false)
+        {
+            _commandQueue.Enqueue(new ActionCommand(() => _googleSheetUpdater.UpdateCell(cell, ScreenShotAndGetCurrentTradeRatio(inverseScreenShotValue))));
+        }
+
+        public float ScreenShotAndGetCurrentTradeRatio(bool reverse = false)
+        {
+            Bitmap srcBitmap = _colorUtil.PrintScreenAt(_ocrTopPoint, _ocrBottomPoint);
+            Bitmap dstBitmap = ProcessBitmap(srcBitmap);
+
+            string result = "";
+
+            result = OCRUtil.OCRAsync(dstBitmap);
+            result = result.Replace("\r", "").Replace("\n", "");
+
+            string[] parts = result.Split(':');
+            if (parts.Length != 2)
+            {
+                _main.SetDebugOCRResult(dstBitmap, "");
+                throw new FormatException("Invalid ratio format - " + result);
+            }
+
+
+            float left = float.Parse(parts[0], CultureInfo.InvariantCulture);
+            float right = float.Parse(parts[1], CultureInfo.InvariantCulture);
+
+            if ((right == 0 && !reverse) || (left == 0 && reverse))
+            {
+                _main.SetDebugOCRResult(dstBitmap, "");
+                throw new DivideByZeroException();
+            }
+
+
+            float ratio = reverse ? (right / left) : (left / right);
+            _main.SetDebugOCRResult(dstBitmap, result + "    " + ratio);
+            return ratio;
+        }
+        private Bitmap ProcessBitmap(Bitmap srcBitmap)
+        {
+            Bitmap processBitmap1 = new Bitmap(srcBitmap.Width, srcBitmap.Height);
+            using var g = Graphics.FromImage(processBitmap1);
+            var cm = new ColorMatrix(new float[][]
+            {
+                new float[] {0.299f, 0.299f, 0.299f, 0, 0},
+                new float[] {0.587f, 0.587f, 0.587f, 0, 0},
+                new float[] {0.114f, 0.114f, 0.114f, 0, 0},
+                new float[] {0,      0,      0,      1, 0},
+                new float[] {0,      0,      0,      0, 1}
+            });
+            var ia = new ImageAttributes();
+            ia.SetColorMatrix(cm);
+            g.InterpolationMode = InterpolationMode.NearestNeighbor;
+            g.DrawImage(srcBitmap, new Rectangle(0, 0, processBitmap1.Width, processBitmap1.Height), 0, 0, srcBitmap.Width, srcBitmap.Height, GraphicsUnit.Pixel, ia);
+
+            Bitmap processBitmap2 = new Bitmap(processBitmap1.Width, processBitmap1.Height);
+            for (int y = 0; y < processBitmap1.Height; y++)
+            {
+                for (int x = 0; x < processBitmap1.Width; x++)
+                {
+                    byte v = processBitmap1.GetPixel(x, y).R;
+                    processBitmap2.SetPixel(x, y, v > BLACK_AND_WHITE_THRESHOLD ? Color.White : Color.Black);
+                }
+            }
+
+            return processBitmap2;
         }
     }
 }

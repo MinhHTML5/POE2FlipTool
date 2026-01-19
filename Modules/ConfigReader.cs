@@ -1,34 +1,31 @@
-﻿using System;
+﻿using POE2FlipTool.DataModel;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 
 namespace POE2FlipTool.Modules
 {
     internal class ConfigReader
     {
-        public static List<string> ReadStringArrayFromJsonFile(string filePath)
+        public static List<TradeItem> ReadConfig()
         {
-            if (!File.Exists(filePath))
+            string json = File.ReadAllText("CONFIG.json");
+
+            var options = new JsonSerializerOptions
             {
-                throw new FileNotFoundException("JSON file not found.", filePath);
-            }
+                PropertyNameCaseInsensitive = true,
+                Converters = { new JsonStringEnumConverter() }
+            };
 
-            string json = File.ReadAllText(filePath);
+            List<TradeItem> items = JsonSerializer.Deserialize<List<TradeItem>>(json, options);
 
-            List<string>? result = JsonSerializer.Deserialize<List<string>>(json);
-
-            if (result == null)
-            {
-                throw new InvalidDataException("JSON content is not a valid string array.");
-            }
-
-            return result;
+            return items;
         }
     }
 }
