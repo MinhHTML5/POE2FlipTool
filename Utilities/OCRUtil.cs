@@ -13,9 +13,15 @@ namespace POE2FlipTool.Utilities
     {
         public static string OCRAsync(Bitmap bitmap)
         {
-            using var engine = new TesseractEngine(@"./tessdata", "eng", EngineMode.TesseractAndLstm);
-            engine.DefaultPageSegMode = PageSegMode.SingleLine;
-            engine.SetVariable("tessedit_char_whitelist", "0123456789.:");
+            using var engine = new TesseractEngine(@"./tessdata", "eng", EngineMode.TesseractOnly);
+            engine.DefaultPageSegMode = PageSegMode.RawLine;
+            engine.SetVariable("tessedit_char_whitelist", "0123456789:.");
+            engine.SetVariable("classify_bln_numeric_mode", "0");
+            engine.SetVariable("preserve_interword_spaces", "1");
+            engine.SetVariable("tessedit_enable_dict_correction", "0");
+
+            engine.SetVariable("load_system_dawg", "0");
+            engine.SetVariable("load_freq_dawg", "0");
 
             using Pix pix = bitmap.ToPix();
             using Page page = engine.Process(pix);

@@ -334,7 +334,10 @@ namespace POE2FlipTool.Modules
         public float ScreenShotAndGetCurrentTradeRatio(bool reverse = false)
         {
             Bitmap srcBitmap = _colorUtil.PrintScreenAt(_ocrTopPoint, _ocrBottomPoint);
-            Bitmap dstBitmap = ProcessBitmap(srcBitmap);
+            Bitmap grayScaledBitmap = _colorUtil.ToGrayscale(srcBitmap);
+            Bitmap scaledBitmap = _colorUtil.UpScale(grayScaledBitmap, 10);
+            Bitmap procBitmap = _colorUtil.Threshold(scaledBitmap);
+            Bitmap dstBitmap = _colorUtil.Invert(procBitmap);
 
             string result = "";
 

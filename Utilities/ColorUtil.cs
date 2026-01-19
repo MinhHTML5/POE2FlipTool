@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -84,6 +85,30 @@ namespace POE2FlipTool.Utilities
             return !difference;
         }
 
+        public Bitmap ToGrayscale(Bitmap src)
+        {
+            var bmp = new Bitmap(src.Width, src.Height);
+            for (int y = 0; y < src.Height; y++)
+                for (int x = 0; x < src.Width; x++)
+                {
+                    var c = src.GetPixel(x, y);
+                    int g = (c.R * 3 + c.G * 6 + c.B) / 10;
+                    bmp.SetPixel(x, y, Color.FromArgb(g, g, g));
+                }
+            return bmp;
+        }
+
+        public Bitmap Threshold(Bitmap src)
+        {
+            var bmp = new Bitmap(src.Width, src.Height);
+            for (int y = 0; y < src.Height; y++)
+                for (int x = 0; x < src.Width; x++)
+                {
+                    int v = src.GetPixel(x, y).R > 135 ? 255 : 0;
+                    bmp.SetPixel(x, y, Color.FromArgb(v, v, v));
+                }
+            return bmp;
+        }
 
 
         public Bitmap PrintScreenAt(Point topPosition, Point bottomPosition)
@@ -104,9 +129,35 @@ namespace POE2FlipTool.Utilities
 
             return bitmap;
         }
+        public Bitmap Invert(Bitmap src)
+        {
+            Bitmap dst = new Bitmap(src.Width, src.Height, PixelFormat.Format24bppRgb);
 
+            using (var g = Graphics.FromImage(dst))
+            {
+                g.DrawImage(src, 0, 0);
+            }
 
+            for (int y = 0; y < dst.Height; y++)
+                for (int x = 0; x < dst.Width; x++)
+                {
+                    var c = dst.GetPixel(x, y);
+                    dst.SetPixel(x, y, Color.FromArgb(255 - c.R, 255 - c.G, 255 - c.B));
+                }
 
+            return dst;
+        }
+
+        public Bitmap UpScale(Bitmap src, int scale)
+        {
+            var dst = new Bitmap(src.Width * scale, src.Height * scale);
+            using var g = Graphics.FromImage(dst);
+            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            g.SmoothingMode = SmoothingMode.HighQuality;
+            g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+            g.DrawImage(src, 0, 0, dst.Width, dst.Height);
+            return dst;
+        }
 
         ~ColorUtil()
         {
