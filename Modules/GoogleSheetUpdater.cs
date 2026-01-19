@@ -40,7 +40,7 @@ namespace POE2FlipTool.Modules
                 Values = new List<IList<object>> { new List<object> { value } }
             };
             var updateRequest = _service.Spreadsheets.Values.Update(valueRange, SPREAD_SHEET_ID, range);
-            updateRequest.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.RAW;
+            updateRequest.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
             var updateResponse = updateRequest.Execute();
         }
     }

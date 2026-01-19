@@ -137,7 +137,7 @@ namespace POE2FlipTool
             // Check for game focus
             if (_windowsUtil.GetCurrentWindowsProcessName() != "PathOfExile" && _started)
             {
-                
+                Stop();
             }
 
             _pricingChecker.MainLoop(deltaTime);

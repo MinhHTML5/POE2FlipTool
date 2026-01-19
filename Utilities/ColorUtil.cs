@@ -104,7 +104,7 @@ namespace POE2FlipTool.Utilities
             for (int y = 0; y < src.Height; y++)
                 for (int x = 0; x < src.Width; x++)
                 {
-                    int v = src.GetPixel(x, y).R > 135 ? 255 : 0;
+                    int v = src.GetPixel(x, y).R > 100 ? 255 : 0;
                     bmp.SetPixel(x, y, Color.FromArgb(v, v, v));
                 }
             return bmp;

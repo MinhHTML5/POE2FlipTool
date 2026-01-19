@@ -175,10 +175,12 @@ namespace POE2FlipTool.Modules
             try
             {
                 if (_commandQueue.Count == 0)
+                {
+                    _main.Stop();
                     return;
+                }
 
                 ICommand cmd = _commandQueue.Peek();
-
                 if (cmd.Execute())
                     _commandQueue.Dequeue();
             }
@@ -201,6 +203,27 @@ namespace POE2FlipTool.Modules
             List<TradeItem> items = ConfigReader.ReadConfig();
 
             // Here is where the check script begin
+            // Select something on both side
+            MoveMouse(_iHavePoint.X, _iHavePoint.Y);
+            Sleep(SLEEP_TIME);
+            SendLeftClick();
+            Sleep(SLEEP_TIME);
+
+            MoveMouse(_itemSelectPoint[0].X, _itemSelectPoint[0].Y);
+            Sleep(SLEEP_TIME);
+            SendLeftClick();
+            Sleep(SLEEP_TIME);
+
+            MoveMouse(_iWantPoint.X, _iWantPoint.Y);
+            Sleep(SLEEP_TIME);
+            SendLeftClick();
+            Sleep(SLEEP_TIME);
+
+            MoveMouse(_itemSelectPoint[0].X, _itemSelectPoint[0].Y);
+            Sleep(SLEEP_TIME);
+            SendLeftClick();
+            Sleep(SLEEP_TIME);
+
             // Update div -> exalt value
             ClickWantHave(itemExaltedOrb, itemDivineOrb);
             Sleep(SLEEP_TIME_WAIT);
@@ -252,31 +275,6 @@ namespace POE2FlipTool.Modules
         public void ClickWantHave(TradeItem want, TradeItem have) 
         {
             Sleep(SLEEP_TIME);
-            // ================================================================================================================
-            MoveMouse(_iWantPoint.X, _iWantPoint.Y);
-            Sleep(SLEEP_TIME);
-            SendLeftClick();
-            Sleep(SLEEP_TIME);
-            // ================================================================================================================
-            MoveMouse(_categoryPoint[(int)want.category].X, _categoryPoint[(int)want.category].Y);
-            Sleep(SLEEP_TIME);
-            SendLeftClick();
-            Sleep(SLEEP_TIME);
-            // ================================================================================================================
-            MoveMouse(_regexPoint.X, _regexPoint.Y);
-            Sleep(SLEEP_TIME);
-            SendLeftClick();
-            Sleep(SLEEP_TIME);
-            // ================================================================================================================
-            TypeItemName(want.name);
-            Sleep(SLEEP_TIME);
-            // ================================================================================================================
-            MoveMouse(_itemSelectPoint[want.itemSelectIndex].X, _itemSelectPoint[want.itemSelectIndex].Y);
-            Sleep(SLEEP_TIME);
-            SendLeftClick();
-            Sleep(SLEEP_TIME);
-            // ================================================================================================================
-
 
             // ================================================================================================================
             MoveMouse(_iHavePoint.X, _iHavePoint.Y);
@@ -298,6 +296,31 @@ namespace POE2FlipTool.Modules
             Sleep(SLEEP_TIME);
             // ================================================================================================================
             MoveMouse(_itemSelectPoint[have.itemSelectIndex].X, _itemSelectPoint[have.itemSelectIndex].Y);
+            Sleep(SLEEP_TIME);
+            SendLeftClick();
+            Sleep(SLEEP_TIME);
+            // ================================================================================================================
+
+            // ================================================================================================================
+            MoveMouse(_iWantPoint.X, _iWantPoint.Y);
+            Sleep(SLEEP_TIME);
+            SendLeftClick();
+            Sleep(SLEEP_TIME);
+            // ================================================================================================================
+            MoveMouse(_categoryPoint[(int)want.category].X, _categoryPoint[(int)want.category].Y);
+            Sleep(SLEEP_TIME);
+            SendLeftClick();
+            Sleep(SLEEP_TIME);
+            // ================================================================================================================
+            MoveMouse(_regexPoint.X, _regexPoint.Y);
+            Sleep(SLEEP_TIME);
+            SendLeftClick();
+            Sleep(SLEEP_TIME);
+            // ================================================================================================================
+            TypeItemName(want.name);
+            Sleep(SLEEP_TIME);
+            // ================================================================================================================
+            MoveMouse(_itemSelectPoint[want.itemSelectIndex].X, _itemSelectPoint[want.itemSelectIndex].Y);
             Sleep(SLEEP_TIME);
             SendLeftClick();
             Sleep(SLEEP_TIME);
@@ -331,12 +354,12 @@ namespace POE2FlipTool.Modules
             _commandQueue.Enqueue(new ActionCommand(() => _googleSheetUpdater.UpdateCell(cell, ScreenShotAndGetCurrentTradeRatio(inverseScreenShotValue))));
         }
 
-        public float ScreenShotAndGetCurrentTradeRatio(bool reverse = false)
+        public string ScreenShotAndGetCurrentTradeRatio(bool reverse = false)
         {
             Bitmap srcBitmap = _colorUtil.PrintScreenAt(_ocrTopPoint, _ocrBottomPoint);
-            Bitmap grayScaledBitmap = _colorUtil.ToGrayscale(srcBitmap);
-            Bitmap scaledBitmap = _colorUtil.UpScale(grayScaledBitmap, 10);
-            Bitmap procBitmap = _colorUtil.Threshold(scaledBitmap);
+            Bitmap scaledBitmap = _colorUtil.UpScale(srcBitmap, 16);
+            Bitmap grayScaledBitmap = _colorUtil.ToGrayscale(scaledBitmap);
+            Bitmap procBitmap = _colorUtil.Threshold(grayScaledBitmap);
             Bitmap dstBitmap = _colorUtil.Invert(procBitmap);
 
             string result = "";
@@ -362,38 +385,9 @@ namespace POE2FlipTool.Modules
             }
 
 
-            float ratio = reverse ? (right / left) : (left / right);
-            _main.SetDebugOCRResult(dstBitmap, result + "    " + ratio);
-            return ratio;
-        }
-        private Bitmap ProcessBitmap(Bitmap srcBitmap)
-        {
-            Bitmap processBitmap1 = new Bitmap(srcBitmap.Width, srcBitmap.Height);
-            using var g = Graphics.FromImage(processBitmap1);
-            var cm = new ColorMatrix(new float[][]
-            {
-                new float[] {0.299f, 0.299f, 0.299f, 0, 0},
-                new float[] {0.587f, 0.587f, 0.587f, 0, 0},
-                new float[] {0.114f, 0.114f, 0.114f, 0, 0},
-                new float[] {0,      0,      0,      1, 0},
-                new float[] {0,      0,      0,      0, 1}
-            });
-            var ia = new ImageAttributes();
-            ia.SetColorMatrix(cm);
-            g.InterpolationMode = InterpolationMode.NearestNeighbor;
-            g.DrawImage(srcBitmap, new Rectangle(0, 0, processBitmap1.Width, processBitmap1.Height), 0, 0, srcBitmap.Width, srcBitmap.Height, GraphicsUnit.Pixel, ia);
-
-            Bitmap processBitmap2 = new Bitmap(processBitmap1.Width, processBitmap1.Height);
-            for (int y = 0; y < processBitmap1.Height; y++)
-            {
-                for (int x = 0; x < processBitmap1.Width; x++)
-                {
-                    byte v = processBitmap1.GetPixel(x, y).R;
-                    processBitmap2.SetPixel(x, y, v > BLACK_AND_WHITE_THRESHOLD ? Color.White : Color.Black);
-                }
-            }
-
-            return processBitmap2;
+            string ratioString = "=" + (reverse ? (right + "/" + left) : (left + "/" + right));
+            _main.SetDebugOCRResult(dstBitmap, result + "    GG Formula: \"" + ratioString + "\"");
+            return ratioString;
         }
     }
 }
