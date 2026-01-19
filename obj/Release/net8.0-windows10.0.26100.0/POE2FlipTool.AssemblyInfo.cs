@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("POE2FlipTool")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1592712a217ee85efc9794d4d03f6ea43d4081ad")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+99e121c29fe8d7b8f36c436c750bf19ce083d58d")]
 [assembly: System.Reflection.AssemblyProductAttribute("POE2FlipTool")]
 [assembly: System.Reflection.AssemblyTitleAttribute("POE2FlipTool")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
