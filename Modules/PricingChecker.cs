@@ -68,8 +68,8 @@ namespace POE2FlipTool.Modules
 
     public class PricingChecker
     {
-        public const int SLEEP_TIME = 200;
-        public const int SLEEP_TIME_WAIT = 500;
+        public const int SLEEP_TIME = 300;
+        public const int SLEEP_TIME_WAIT = 1000;
 
         public PointF OCR_TOP = new PointF(0.28945312f, 0.17222223f);
         public PointF OCR_BOTTOM = new PointF(0.35664064f, 0.192f);
