@@ -159,6 +159,76 @@ namespace POE2FlipTool.Utilities
             return dst;
         }
 
+        public Bitmap RemoveNoisePreserveDots(Bitmap src)
+        {
+            int w = src.Width, h = src.Height;
+            bool[,] visited = new bool[w, h];
+            Bitmap dst = new Bitmap(src);
+
+            for (int y = 0; y < h; y++)
+                for (int x = 0; x < w; x++)
+                {
+                    if (visited[x, y]) continue;
+                    if (dst.GetPixel(x, y).R == 0) continue;
+
+                    var pixels = new System.Collections.Generic.List<Point>();
+                    Flood(dst, visited, x, y, pixels);
+
+                    int area = pixels.Count;
+                    var bounds = GetBounds(pixels);
+
+                    bool looksLikeDot =
+                        area >= 12 && area <= 60 &&
+                        bounds.Width <= bounds.Height * 1.4 &&
+                        bounds.Height <= bounds.Width * 1.4;
+
+                    if (!looksLikeDot && area < 20)
+                        foreach (var p in pixels)
+                            dst.SetPixel(p.X, p.Y, Color.Black);
+                }
+
+            return dst;
+        }
+
+        private void Flood(Bitmap bmp, bool[,] visited, int sx, int sy,
+            System.Collections.Generic.List<Point> pixels)
+        {
+            var stack = new System.Collections.Generic.Stack<Point>();
+            stack.Push(new Point(sx, sy));
+
+            while (stack.Count > 0)
+            {
+                var p = stack.Pop();
+                if (p.X < 0 || p.Y < 0 || p.X >= bmp.Width || p.Y >= bmp.Height) continue;
+                if (visited[p.X, p.Y]) continue;
+                if (bmp.GetPixel(p.X, p.Y).R == 0) continue;
+
+                visited[p.X, p.Y] = true;
+                pixels.Add(p);
+
+                stack.Push(new Point(p.X + 1, p.Y));
+                stack.Push(new Point(p.X - 1, p.Y));
+                stack.Push(new Point(p.X, p.Y + 1));
+                stack.Push(new Point(p.X, p.Y - 1));
+            }
+        }
+        private Rectangle GetBounds(
+            System.Collections.Generic.List<Point> pts)
+        {
+            int minX = int.MaxValue, minY = int.MaxValue;
+            int maxX = int.MinValue, maxY = int.MinValue;
+
+            foreach (var p in pts)
+            {
+                minX = Math.Min(minX, p.X);
+                minY = Math.Min(minY, p.Y);
+                maxX = Math.Max(maxX, p.X);
+                maxY = Math.Max(maxY, p.Y);
+            }
+
+            return Rectangle.FromLTRB(minX, minY, maxX + 1, maxY + 1);
+        }
+
         ~ColorUtil()
         {
             _graphics.Dispose();
