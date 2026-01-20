@@ -364,8 +364,14 @@ namespace POE2FlipTool.Modules
 
             string result = "";
 
+            // result = OllamaVisionClient.Instance.Send(
+            //    dstBitmap,
+            //    "Answer with the exact text shown. No explanation."
+            //);
+
             result = OCRUtil.OCRAsync(dstBitmap);
             result = result.Replace("\r", "").Replace("\n", "");
+            _main.SetDebugOCRResult(dstBitmap, "");
 
             string[] parts = result.Split(':');
             if (parts.Length != 2)
