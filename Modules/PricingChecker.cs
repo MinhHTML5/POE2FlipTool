@@ -370,7 +370,10 @@ namespace POE2FlipTool.Modules
             string result = "";
 
             result = OCRUtil.OCRAsync(bitmap);
-            result = result.Replace("\r", "").Replace("\n", "");
+            //result = OllamaVisionClient.Instance.Send(
+            //   bitmap,
+            //   "English only, Answer with the exact text shown. No explanation. No extra info");            result = result.Replace("\r", "").Replace("\n", "");
+
 
 
             int splitIndex = 0;
