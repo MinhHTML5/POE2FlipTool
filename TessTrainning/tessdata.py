@@ -1,3 +1,4 @@
+import os
 import subprocess
 import shutil
 from pathlib import Path
@@ -5,11 +6,13 @@ from pathlib import Path
 BASE_DIR = Path(__file__).parent.resolve()
 DATA_DIR = BASE_DIR / "data"
 WORK_DIR = BASE_DIR / "work"
+PROC_DIR = BASE_DIR / "proc"
 OUTPUT_DIR = WORK_DIR / "output"
 
 TESSDATA_DIR = (BASE_DIR / ".." / "tessdata").resolve()
 ENG_TRAINEDDATA = TESSDATA_DIR / "eng.traineddata"
 
+BASELANG = "eng"
 LANG = "num"
 PSM = "7"
 
@@ -42,6 +45,11 @@ def prep():
 # ---------------- TRAIN ----------------
 def train():
     WORK_DIR.mkdir(exist_ok=True)
+    PROC_DIR.mkdir(exist_ok=True)
+    train_new = True
+    if os.path.exists(f"{OUTPUT_DIR}/{LANG}.traineddata"):
+        train_new = False
+        shutil.rmtree(OUTPUT_DIR)
 
     # 1) unicharset
     boxes = sorted(WORK_DIR.glob("*.box"))
@@ -51,15 +59,15 @@ def train():
     run([
         "combine_tessdata", "-u",
         str(ENG_TRAINEDDATA), "eng"
-    ], cwd=WORK_DIR)
+    ], cwd=PROC_DIR)
 
-    shutil.copy(WORK_DIR / "unicharset", WORK_DIR / f"{LANG}.unicharset")
-    shutil.copy(WORK_DIR / "eng.lstm", WORK_DIR / f"{LANG}.lstm")
-    shutil.copy(WORK_DIR / "eng.lstm-recoder", WORK_DIR / f"{LANG}.lstm-recoder")
-    shutil.copy(WORK_DIR / "eng.lstm-unicharset", WORK_DIR / f"{LANG}.lstm-unicharset")
+    shutil.copy(WORK_DIR / "unicharset", PROC_DIR / f"{LANG}.unicharset")
+    shutil.copy(PROC_DIR / f"{BASELANG}.lstm", PROC_DIR / f"{LANG}.lstm")
+    shutil.copy(PROC_DIR / f"{BASELANG}.lstm-recoder", PROC_DIR / f"{LANG}.lstm-recoder")
+    shutil.copy(PROC_DIR / f"{BASELANG}.lstm-unicharset", PROC_DIR / f"{LANG}.lstm-unicharset")
 
     # 3) traineddata shell
-    run(["combine_tessdata", f"{LANG}."], cwd=WORK_DIR)
+    run(["combine_tessdata", f"{LANG}."], cwd=PROC_DIR)
 
     # 4) REGENERATE LSTMF WITH *NUM.TRAINEDDATA*
     for f in WORK_DIR.glob("*.lstmf"):
@@ -86,25 +94,44 @@ def train():
 
     OUTPUT_DIR.mkdir(exist_ok=True)
     # 5) train
-    run([
-        "lstmtraining",
-        "--net_spec", NET_SPEC,
-        "--traineddata", f"{LANG}.traineddata",
-        "--model_output", "output/num",
-        "--train_listfile", "list.txt",
-        "--learning_rate", "0.00005",
-        "--max_iterations", "100000",
-        # "--debug_interval", "1"
-    ], cwd=WORK_DIR)
+    if train_new:
+        print("Start new training")
+        run([
+            "lstmtraining",
+            # "--continue_from", f"{PROC_DIR}/{BASELANG}.lstm",
+            "--net_spec", NET_SPEC,
+            "--traineddata", f"{PROC_DIR}/{LANG}.traineddata",
+            "--model_output", f"output/{LANG}",
+            "--train_listfile", "list.txt",
+            "--learning_rate", "0.00005",
+            "--max_iterations", "100000",
+            # "--debug_interval", "1"
+        ], cwd=WORK_DIR)
+    else:
+        print("Training old model")
+        run([
+            "lstmtraining",
+            "--continue_from", f"{PROC_DIR}/{LANG}.lstm",
+            # "--net_spec", NET_SPEC,
+            "--traineddata", f"{PROC_DIR}/{LANG}.traineddata",
+            "--model_output", f"output/{LANG}",
+            "--train_listfile", "list.txt",
+            "--learning_rate", "0.00005",
+            "--max_iterations", "100000",
+            # "--debug_interval", "1"
+        ], cwd=WORK_DIR)
 
     # 6) finalize
     run([
         "lstmtraining",
         "--stop_training",
         "--continue_from", f"{OUTPUT_DIR}/{LANG}_checkpoint",
-        "--traineddata", f"{LANG}.traineddata",
+        "--traineddata", f"{PROC_DIR}/{LANG}.traineddata",
         "--model_output", f"{OUTPUT_DIR}/{LANG}.traineddata"
     ], cwd=WORK_DIR)
+
+    
+    shutil.copy(f"{OUTPUT_DIR}/{LANG}.traineddata",f"{ENG_TRAINEDDATA}")
 
 
 if __name__ == "__main__":
