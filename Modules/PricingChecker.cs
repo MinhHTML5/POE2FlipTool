@@ -360,14 +360,14 @@ namespace POE2FlipTool.Modules
             Bitmap scaledBitmap = _colorUtil.UpScale(srcBitmap, 16);
             Bitmap grayScaledBitmap = _colorUtil.ToGrayscale(scaledBitmap);
             Bitmap procBitmap = _colorUtil.Threshold(grayScaledBitmap);
-            Bitmap dstBitmap = _colorUtil.Invert(procBitmap);
+            Bitmap ivtBitmap = _colorUtil.Invert(procBitmap);
+            Bitmap dstBitmap = _colorUtil.RemoveNoisePreserveDots(ivtBitmap);
 
             string result = "";
 
-            // result = OllamaVisionClient.Instance.Send(
-            //    dstBitmap,
-            //    "Answer with the exact text shown. No explanation."
-            //);
+            //result = OllamaVisionClient.Instance.Send(
+            //   dstBitmap,
+            //   "English only, Answer with the exact text shown. No explanation. No extra info");
 
             result = OCRUtil.OCRAsync(dstBitmap);
             result = result.Replace("\r", "").Replace("\n", "");
