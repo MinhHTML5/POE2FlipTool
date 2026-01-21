@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using System.Threading;
 
 namespace POE2FlipTool.Utilities
 {
@@ -165,8 +166,11 @@ namespace POE2FlipTool.Utilities
             {
                 keybd_event((byte)Keys.ControlKey, 0, KEYEVENTF_KEYDOWN, UIntPtr.Zero);
             }
+            System.Threading.Thread.Sleep(20);
             keybd_event((byte)key, 0, KEYEVENTF_KEYDOWN, UIntPtr.Zero);
+            System.Threading.Thread.Sleep(20);
             keybd_event((byte)key, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
+            System.Threading.Thread.Sleep(20);
             if (control && !_controlPressing)
             {
                 keybd_event((byte)Keys.ControlKey, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);

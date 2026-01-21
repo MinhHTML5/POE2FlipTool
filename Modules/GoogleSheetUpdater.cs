@@ -41,7 +41,7 @@ namespace POE2FlipTool.Modules
             };
             var updateRequest = _service.Spreadsheets.Values.Update(valueRange, SPREAD_SHEET_ID, range);
             updateRequest.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
-            var updateResponse = updateRequest.Execute();
+            updateRequest.ExecuteAsync();
         }
     }
 }

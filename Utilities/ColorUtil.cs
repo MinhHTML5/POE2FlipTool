@@ -85,30 +85,9 @@ namespace POE2FlipTool.Utilities
             return !difference;
         }
 
-        public Bitmap ToGrayscale(Bitmap src)
-        {
-            var bmp = new Bitmap(src.Width, src.Height);
-            for (int y = 0; y < src.Height; y++)
-                for (int x = 0; x < src.Width; x++)
-                {
-                    var c = src.GetPixel(x, y);
-                    int g = (c.R * 3 + c.G * 6 + c.B) / 10;
-                    bmp.SetPixel(x, y, Color.FromArgb(g, g, g));
-                }
-            return bmp;
-        }
+        
 
-        public Bitmap Threshold(Bitmap src)
-        {
-            var bmp = new Bitmap(src.Width, src.Height);
-            for (int y = 0; y < src.Height; y++)
-                for (int x = 0; x < src.Width; x++)
-                {
-                    int v = src.GetPixel(x, y).R > 100 ? 255 : 0;
-                    bmp.SetPixel(x, y, Color.FromArgb(v, v, v));
-                }
-            return bmp;
-        }
+
 
 
         public Bitmap PrintScreenAt(Point topPosition, Point bottomPosition)
@@ -129,6 +108,44 @@ namespace POE2FlipTool.Utilities
 
             return bitmap;
         }
+
+
+
+
+
+
+
+        public Bitmap ToGrayscale(Bitmap src)
+        {
+            var dst = new Bitmap(src.Width, src.Height);
+            for (int y = 0; y < src.Height; y++)
+            {
+                for (int x = 0; x < src.Width; x++)
+                {
+                    var c = src.GetPixel(x, y);
+                    int g = (int)(0.299 * c.R + 0.587 * c.G + 0.114 * c.B);
+                    dst.SetPixel(x, y, Color.FromArgb(g, g, g));
+                }
+            }
+            src.Dispose();
+            return dst;
+        }
+
+        public Bitmap Threshold(Bitmap src, int threshold)
+        {
+            var dst = new Bitmap(src.Width, src.Height);
+            for (int y = 0; y < src.Height; y++)
+            {
+                for (int x = 0; x < src.Width; x++)
+                {
+                    int v = src.GetPixel(x, y).R > threshold ? 255 : 0;
+                    dst.SetPixel(x, y, Color.FromArgb(v, v, v));
+                }
+            }
+            src.Dispose();
+            return dst;
+        }
+
         public Bitmap Invert(Bitmap src)
         {
             Bitmap dst = new Bitmap(src.Width, src.Height, PixelFormat.Format24bppRgb);
@@ -139,12 +156,15 @@ namespace POE2FlipTool.Utilities
             }
 
             for (int y = 0; y < dst.Height; y++)
+            {
                 for (int x = 0; x < dst.Width; x++)
                 {
                     var c = dst.GetPixel(x, y);
                     dst.SetPixel(x, y, Color.FromArgb(255 - c.R, 255 - c.G, 255 - c.B));
                 }
+            }
 
+            src.Dispose();
             return dst;
         }
 
@@ -156,7 +176,121 @@ namespace POE2FlipTool.Utilities
             g.SmoothingMode = SmoothingMode.HighQuality;
             g.PixelOffsetMode = PixelOffsetMode.HighQuality;
             g.DrawImage(src, 0, 0, dst.Width, dst.Height);
+
+            src.Dispose();
             return dst;
+        }
+
+        public Bitmap IncreaseContrast(Bitmap src, float contrast)
+        {
+            var dst = new Bitmap(src.Width, src.Height);
+
+            float t = 0.5f * (1.0f - contrast);
+
+            for (int y = 0; y < src.Height; y++)
+            {
+                for (int x = 0; x < src.Width; x++)
+                {
+                    int c = src.GetPixel(x, y).R;
+                    float v = c / 255f;
+                    v = v * contrast + t;
+                    v = Math.Clamp(v, 0f, 1f);
+                    int nv = (int)(v * 255);
+                    dst.SetPixel(x, y, Color.FromArgb(nv, nv, nv));
+                }
+            }
+            src.Dispose();
+            return dst;
+        }
+
+        public Bitmap Blur(Bitmap src)
+        {
+            var dst = new Bitmap(src.Width, src.Height);
+
+            for (int y = 1; y < src.Height - 1; y++)
+            {
+                for (int x = 1; x < src.Width - 1; x++)
+                {
+                    int sum = 0;
+                    for (int ky = -1; ky <= 1; ky++)
+                        for (int kx = -1; kx <= 1; kx++)
+                            sum += src.GetPixel(x + kx, y + ky).R;
+
+                    int avg = sum / 9;
+                    dst.SetPixel(x, y, Color.FromArgb(avg, avg, avg));
+                }
+            }
+            src.Dispose();
+            return dst;
+        }
+
+        public Bitmap VerticalDilation(Bitmap src)
+        {
+            Bitmap dst = new Bitmap(src);
+
+            for (int y = 1; y < src.Height - 1; y++)
+            {
+                for (int x = 0; x < src.Width; x++)
+                {
+                    // if current pixel is black
+                    if (src.GetPixel(x, y).R == 0)
+                    {
+                        // reinforce vertical neighbors
+                        dst.SetPixel(x, y - 1, Color.Black);
+                        dst.SetPixel(x, y + 1, Color.Black);
+                    }
+                }
+            }
+            src.Dispose();
+            return dst;
+        }
+
+        public Bitmap CropToBlackBounds(Bitmap src)
+        {
+            int minX = src.Width;
+            int minY = src.Height;
+            int maxX = 0;
+            int maxY = 0;
+
+            bool foundBlack = false;
+
+            for (int y = 0; y < src.Height; y++)
+            {
+                for (int x = 0; x < src.Width; x++)
+                {
+                    // binary image: black text
+                    if (src.GetPixel(x, y).R == 0)
+                    {
+                        foundBlack = true;
+
+                        if (x < minX) minX = x;
+                        if (y < minY) minY = y;
+                        if (x > maxX) maxX = x;
+                        if (y > maxY) maxY = y;
+                    }
+                }
+            }
+
+            // Safety: no black pixels
+            if (!foundBlack)
+                return (Bitmap)src.Clone();
+
+            int width = maxX - minX + 1;
+            int height = maxY - minY + 1;
+
+            var cropped = new Bitmap(width, height);
+
+            using (Graphics g = Graphics.FromImage(cropped))
+            {
+                g.DrawImage(
+                    src,
+                    new Rectangle(0, 0, width, height),
+                    new Rectangle(minX, minY, width, height),
+                    GraphicsUnit.Pixel
+                );
+            }
+
+            return cropped;
         }
 
         public Bitmap RemoveNoisePreserveDots(Bitmap src)
@@ -166,6 +300,7 @@ namespace POE2FlipTool.Utilities
             Bitmap dst = new Bitmap(src);
 
             for (int y = 0; y < h; y++)
+            {
                 for (int x = 0; x < w; x++)
                 {
                     if (visited[x, y]) continue;
@@ -186,12 +321,11 @@ namespace POE2FlipTool.Utilities
                         foreach (var p in pixels)
                             dst.SetPixel(p.X, p.Y, Color.Black);
                 }
-
+            }
             return dst;
         }
 
-        private void Flood(Bitmap bmp, bool[,] visited, int sx, int sy,
-            System.Collections.Generic.List<Point> pixels)
+        private void Flood(Bitmap bmp, bool[,] visited, int sx, int sy, System.Collections.Generic.List<Point> pixels)
         {
             var stack = new System.Collections.Generic.Stack<Point>();
             stack.Push(new Point(sx, sy));

@@ -3,6 +3,7 @@ using POE2FlipTool.Utilities;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Globalization;
+using System.Text.RegularExpressions;
 
 
 namespace POE2FlipTool.Modules
@@ -68,11 +69,11 @@ namespace POE2FlipTool.Modules
 
     public class PricingChecker
     {
-        public const int SLEEP_TIME = 300;
-        public const int SLEEP_TIME_WAIT = 1000;
+        public const int SLEEP_TIME = 250;
+        public const int SLEEP_TIME_WAIT = 500;
 
-        public PointF OCR_TOP = new PointF(0.28945312f, 0.17222223f);
-        public PointF OCR_BOTTOM = new PointF(0.35664064f, 0.192f);
+        public PointF OCR_TOP = new PointF(0.30645312f, 0.17222223f);
+        public PointF OCR_BOTTOM = new PointF(0.34664064f, 0.192f);
         public PointF I_WANT = new PointF(0.19f, 0.22f);
         public PointF I_HAVE = new PointF(0.44f, 0.22f);
         public PointF REGEX = new PointF(0.36f, 0.87f);
@@ -89,12 +90,10 @@ namespace POE2FlipTool.Modules
 
         public const int SELL_FOR_DIVINE_Y = 11;
         public const int BUY_WITH_EXALT_Y = 13;
-        public const int BUY_WITH_CHAOS_Y = 36;
+        public const int BUY_WITH_CHAOS_Y = 16;
         public const int BUY_WITH_DIVINE_Y = 30;
         public const int SELL_FOR_EXALT_Y = 32;
         public const int SELL_FOR_CHAOS_Y = 35;
-
-        public const int BLACK_AND_WHITE_THRESHOLD = 100;
 
 
 
@@ -124,6 +123,7 @@ namespace POE2FlipTool.Modules
 
         private bool _started = false;
         private Queue<ICommand> _commandQueue = new();
+
 
         public PricingChecker(Main main, WindowsUtil windowsUtil, InputHook inputHook, ColorUtil colorUtil, GoogleSheetUpdater googleSheetUpdater)
         {
@@ -222,7 +222,6 @@ namespace POE2FlipTool.Modules
             MoveMouse(_itemSelectPoint[0].X, _itemSelectPoint[0].Y);
             Sleep(SLEEP_TIME);
             SendLeftClick();
-            Sleep(SLEEP_TIME);
 
             // Update div -> exalt value
             ClickWantHave(itemExaltedOrb, itemDivineOrb);
@@ -356,27 +355,63 @@ namespace POE2FlipTool.Modules
 
         public string ScreenShotAndGetCurrentTradeRatio(bool reverse = false)
         {
-            Bitmap srcBitmap = _colorUtil.PrintScreenAt(_ocrTopPoint, _ocrBottomPoint);
-            Bitmap scaledBitmap = _colorUtil.UpScale(srcBitmap, 16);
-            Bitmap grayScaledBitmap = _colorUtil.ToGrayscale(scaledBitmap);
-            Bitmap procBitmap = _colorUtil.Threshold(grayScaledBitmap);
-            Bitmap dstBitmap = _colorUtil.Invert(procBitmap);
+            Bitmap bitmap = _colorUtil.PrintScreenAt(_ocrTopPoint, _ocrBottomPoint);
+            bitmap = _colorUtil.UpScale(bitmap, 2);
+            bitmap = _colorUtil.ToGrayscale(bitmap);
+            bitmap = _colorUtil.IncreaseContrast(bitmap, 2f);
+            //bitmap = _colorUtil.Blur(bitmap);
+            bitmap = _colorUtil.Threshold(bitmap, 100);
+            bitmap = _colorUtil.Invert(bitmap);
+            bitmap =_colorUtil.CropToBlackBounds(bitmap);
+            //bitmap = _colorUtil.VerticalDilation(bitmap);
+
+            _main.SetDebugOCRResult(bitmap, "");
 
             string result = "";
 
-            // result = OllamaVisionClient.Instance.Send(
-            //    dstBitmap,
-            //    "Answer with the exact text shown. No explanation."
-            //);
-
-            result = OCRUtil.OCRAsync(dstBitmap);
+            result = OCRUtil.OCRAsync(bitmap);
             result = result.Replace("\r", "").Replace("\n", "");
-            _main.SetDebugOCRResult(dstBitmap, "");
 
-            string[] parts = result.Split(':');
+
+            int splitIndex = 0;
+            if (result.Contains(':'))
+            {
+                splitIndex = result.IndexOf(':');
+            }
+            else if (result.Contains(" . "))
+            {
+                splitIndex = result.IndexOf(" . ");
+            }
+            else if (result.Contains(" ."))
+            {
+                splitIndex = result.IndexOf(" .");
+            }
+            else if (result.Contains(". "))
+            {
+                splitIndex = result.IndexOf(". ");
+            }
+            else if (result.Contains(" "))
+            {
+                splitIndex = result.IndexOf(" ");
+            }
+            else if (result.Contains("1.") && !result.Contains(".1"))
+            {
+                splitIndex = result.IndexOf("1.");
+            }
+            else if (result.Contains(".1") && !result.Contains("1."))
+            {
+                splitIndex = result.IndexOf(".1");
+            }
+            else
+            {
+                SaveWithNextIndex(bitmap);
+                throw new FormatException("Invalid ratio format - " + result);
+            }
+
+            string[] parts = result.Split(result[splitIndex]);
             if (parts.Length != 2)
             {
-                _main.SetDebugOCRResult(dstBitmap, "");
+                SaveWithNextIndex(bitmap);
                 throw new FormatException("Invalid ratio format - " + result);
             }
 
@@ -386,14 +421,34 @@ namespace POE2FlipTool.Modules
 
             if ((right == 0 && !reverse) || (left == 0 && reverse))
             {
-                _main.SetDebugOCRResult(dstBitmap, "");
                 throw new DivideByZeroException();
             }
 
-
             string ratioString = "=" + (reverse ? (right + "/" + left) : (left + "/" + right));
-            _main.SetDebugOCRResult(dstBitmap, result + "    GG Formula: \"" + ratioString + "\"");
+            _main.SetErrorMessage(result + "    GG Formula: \"" + ratioString + "\"");
             return ratioString;
+        }
+
+        public void SaveWithNextIndex(Bitmap bitmap)
+        {
+            Regex FileIndexRegex = new Regex(@"^sample_(\d+)\.png$", RegexOptions.IgnoreCase);
+
+            Directory.CreateDirectory("errorImages");
+
+            int nextIndex = Directory
+                .EnumerateFiles("errorImages", "sample_*.png")
+                .Select(path => Path.GetFileName(path))
+                .Select(name =>
+                {
+                    var match = FileIndexRegex.Match(name);
+                    return match.Success ? int.Parse(match.Groups[1].Value) : -1;
+                })
+                .Where(i => i >= 0)
+                .DefaultIfEmpty(-1)
+                .Max() + 1;
+
+            string filePath = Path.Combine("errorImages", $"sample_{nextIndex}.png");
+            bitmap.Save(filePath);
         }
     }
 }

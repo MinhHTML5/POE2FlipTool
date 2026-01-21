@@ -42,15 +42,15 @@
             // 
             pctDebug.Location = new Point(12, 108);
             pctDebug.Name = "pctDebug";
-            pctDebug.Size = new Size(374, 57);
-            pctDebug.SizeMode = PictureBoxSizeMode.Zoom;
+            pctDebug.Size = new Size(676, 162);
+            pctDebug.SizeMode = PictureBoxSizeMode.CenterImage;
             pctDebug.TabIndex = 0;
             pctDebug.TabStop = false;
             // 
             // lblDebugTitle
             // 
             lblDebugTitle.AutoSize = true;
-            lblDebugTitle.Location = new Point(12, 186);
+            lblDebugTitle.Location = new Point(12, 273);
             lblDebugTitle.Name = "lblDebugTitle";
             lblDebugTitle.Size = new Size(95, 15);
             lblDebugTitle.TabIndex = 1;
@@ -59,7 +59,7 @@
             // lblDebug
             // 
             lblDebug.AutoSize = true;
-            lblDebug.Location = new Point(113, 186);
+            lblDebug.Location = new Point(113, 273);
             lblDebug.Name = "lblDebug";
             lblDebug.Size = new Size(43, 15);
             lblDebug.TabIndex = 2;
@@ -105,7 +105,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(406, 218);
+            ClientSize = new Size(700, 297);
             Controls.Add(lblTutorial4);
             Controls.Add(lblTutorial3);
             Controls.Add(lblTutorial2);
