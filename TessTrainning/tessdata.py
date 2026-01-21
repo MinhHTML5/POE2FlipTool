@@ -3,6 +3,8 @@ import subprocess
 import shutil
 from pathlib import Path
 
+# =true if you want train from scatch
+train_new = False
 BASE_DIR = Path(__file__).parent.resolve()
 DATA_DIR = BASE_DIR / "data"
 WORK_DIR = BASE_DIR / "work"
@@ -47,8 +49,7 @@ def train():
     WORK_DIR.mkdir(exist_ok=True)
     PROC_DIR.mkdir(exist_ok=True)
     train_new = True
-    if os.path.exists(f"{OUTPUT_DIR}/{LANG}.traineddata"):
-        train_new = False
+    if os.path.exists(f"{OUTPUT_DIR}"):
         shutil.rmtree(OUTPUT_DIR)
 
     # 1) unicharset
