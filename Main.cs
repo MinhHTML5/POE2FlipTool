@@ -57,7 +57,7 @@ namespace POE2FlipTool
             _stopwatch.Start();
 
             _googleSheetUpdater = new GoogleSheetUpdater();
-            _pricingChecker = new PricingChecker(this, _windowsUtil, _inputHook, _colorUtil, _googleSheetUpdater);
+            _pricingChecker = new PricingChecker(this, _windowsUtil, _inputHook, _colorUtil, _ocrUtil, _googleSheetUpdater);
             _pricingChecker.Init();
         }
 
@@ -99,7 +99,7 @@ namespace POE2FlipTool
 
         private void OnMouseKeyEvent(MouseButtons key, bool isDown)
         {
-            
+
         }
 
 
@@ -125,6 +125,14 @@ namespace POE2FlipTool
         public void SetErrorMessage(string message)
         {
             lblDebug.Text = message;
+        }
+
+        public void AddOCRDebugControl(OCRDebug ocrDebug)
+        {
+            flpDebug.SuspendLayout();
+            flpDebug.Controls.Add(ocrDebug);
+            flpDebug.ResumeLayout();
+            flpDebug.ScrollControlIntoView(ocrDebug);
         }
 
 

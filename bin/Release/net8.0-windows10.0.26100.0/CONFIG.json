@@ -16,5 +16,35 @@
     "name": "Esh's Catalyst",
     "itemSelectIndex": 1,
     "column": "E"
+  },
+  {
+    "category": "Breach",
+    "name": "Tul's Catalyst",
+    "itemSelectIndex": 1,
+    "column": "F"
+  },
+  {
+    "category": "Breach",
+    "name": "Reaver Catalyst",
+    "itemSelectIndex": 1,
+    "column": "G"
+  },
+  {
+    "category": "Breach",
+    "name": "Sibilant Catalyst",
+    "itemSelectIndex": 1,
+    "column": "H"
+  },
+  {
+    "category": "Breach",
+    "name": "Skittering Catalyst",
+    "itemSelectIndex": 1,
+    "column": "I"
+  },
+  {
+    "category": "Breach",
+    "name": "Neural Catalyst",
+    "itemSelectIndex": 1,
+    "column": "J"
   }
 ]

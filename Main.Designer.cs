@@ -35,6 +35,7 @@
             lblTutorial2 = new Label();
             lblTutorial3 = new Label();
             lblTutorial4 = new Label();
+            flpDebug = new FlowLayoutPanel();
             ((System.ComponentModel.ISupportInitialize)pctDebug).BeginInit();
             SuspendLayout();
             // 
@@ -42,7 +43,7 @@
             // 
             pctDebug.Location = new Point(12, 108);
             pctDebug.Name = "pctDebug";
-            pctDebug.Size = new Size(676, 162);
+            pctDebug.Size = new Size(341, 89);
             pctDebug.SizeMode = PictureBoxSizeMode.CenterImage;
             pctDebug.TabIndex = 0;
             pctDebug.TabStop = false;
@@ -50,7 +51,7 @@
             // lblDebugTitle
             // 
             lblDebugTitle.AutoSize = true;
-            lblDebugTitle.Location = new Point(12, 273);
+            lblDebugTitle.Location = new Point(12, 209);
             lblDebugTitle.Name = "lblDebugTitle";
             lblDebugTitle.Size = new Size(95, 15);
             lblDebugTitle.TabIndex = 1;
@@ -59,7 +60,7 @@
             // lblDebug
             // 
             lblDebug.AutoSize = true;
-            lblDebug.Location = new Point(113, 273);
+            lblDebug.Location = new Point(113, 209);
             lblDebug.Name = "lblDebug";
             lblDebug.Size = new Size(43, 15);
             lblDebug.TabIndex = 2;
@@ -101,11 +102,23 @@
             lblTutorial4.TabIndex = 6;
             lblTutorial4.Text = "- Press ctrl + N again to immediately stop";
             // 
+            // flpDebug
+            // 
+            flpDebug.AutoScroll = true;
+            flpDebug.BorderStyle = BorderStyle.FixedSingle;
+            flpDebug.FlowDirection = FlowDirection.TopDown;
+            flpDebug.Location = new Point(367, 9);
+            flpDebug.Name = "flpDebug";
+            flpDebug.Size = new Size(450, 1086);
+            flpDebug.TabIndex = 7;
+            flpDebug.WrapContents = false;
+            // 
             // Main
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(700, 297);
+            ClientSize = new Size(829, 1107);
+            Controls.Add(flpDebug);
             Controls.Add(lblTutorial4);
             Controls.Add(lblTutorial3);
             Controls.Add(lblTutorial2);
@@ -130,5 +143,6 @@
         private Label lblTutorial2;
         private Label lblTutorial3;
         private Label lblTutorial4;
+        private FlowLayoutPanel flpDebug;
     }
 }

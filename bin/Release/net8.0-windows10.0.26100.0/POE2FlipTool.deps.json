@@ -10,8 +10,6 @@
         "dependencies": {
           "Google.Apis.Auth": "1.73.0",
           "Google.Apis.Sheets.v4": "1.72.0.3966",
-          "Tesseract": "5.2.0",
-          "Tesseract.Drawing": "5.2.0",
           "runtimepack.Microsoft.Windows.SDK.NET.Ref": "10.0.26100.57"
         },
         "runtime": {
@@ -100,25 +98,6 @@
             "fileVersion": "7.0.723.27404"
           }
         }
-      },
-      "Tesseract/5.2.0": {
-        "runtime": {
-          "lib/netstandard2.0/Tesseract.dll": {
-            "assemblyVersion": "5.2.0.0",
-            "fileVersion": "5.2.0.0"
-          }
-        }
-      },
-      "Tesseract.Drawing/5.2.0": {
-        "dependencies": {
-          "Tesseract": "5.2.0"
-        },
-        "runtime": {
-          "lib/netstandard2.0/Tesseract.Drawing.dll": {
-            "assemblyVersion": "5.2.0.0",
-            "fileVersion": "5.2.0.0"
-          }
-        }
       }
     }
   },
@@ -174,20 +153,6 @@
       "sha512": "sha512-/qEUN91mP/MUQmJnM5y5BdT7ZoPuVrtxnFlbJ8a3kBJGhe2wCzBfnPFtK2wTtEEcf3DMGR9J00GZZfg6HRI6yA==",
       "path": "system.management/7.0.2",
       "hashPath": "system.management.7.0.2.nupkg.sha512"
-    },
-    "Tesseract/5.2.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-YB7feJlrTWSXtK8+WaCcseGSPK/1r2d2FWeKGyndlrPwYClrzTlCoHD4/oQEUjKafmpkWlhTZZ7pxiRJYZgj6w==",
-      "path": "tesseract/5.2.0",
-      "hashPath": "tesseract.5.2.0.nupkg.sha512"
-    },
-    "Tesseract.Drawing/5.2.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-ORuub0AagnAGPjdhO8qNxI6Z+2dXUmqWFy6qSjQ+Wr56SxQiV2jNvGM9Tpluvd7F5vwJeqXEWQnzFvGL6iHfjA==",
-      "path": "tesseract.drawing/5.2.0",
-      "hashPath": "tesseract.drawing.5.2.0.nupkg.sha512"
     }
   }
 }

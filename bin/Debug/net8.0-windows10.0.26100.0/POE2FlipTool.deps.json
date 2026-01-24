@@ -10,8 +10,6 @@
         "dependencies": {
           "Google.Apis.Auth": "1.73.0",
           "Google.Apis.Sheets.v4": "1.72.0.3966",
-          "Tesseract": "5.2.0",
-          "Tesseract.Drawing": "5.2.0",
           "runtimepack.Microsoft.Windows.SDK.NET.Ref": "10.0.26100.57"
         },
         "runtime": {
@@ -77,7 +75,6 @@
           }
         }
       },
-      "Microsoft.Win32.SystemEvents/6.0.0": {},
       "Newtonsoft.Json/13.0.4": {
         "runtime": {
           "lib/net6.0/Newtonsoft.Json.dll": {
@@ -86,16 +83,7 @@
           }
         }
       },
-      "System.CodeDom/7.0.0": {},
-      "System.Drawing.Common/6.0.0": {
-        "dependencies": {
-          "Microsoft.Win32.SystemEvents": "6.0.0"
-        }
-      },
       "System.Management/7.0.2": {
-        "dependencies": {
-          "System.CodeDom": "7.0.0"
-        },
         "runtime": {
           "lib/net7.0/System.Management.dll": {
             "assemblyVersion": "7.0.0.2",
@@ -108,30 +96,6 @@
             "assetType": "runtime",
             "assemblyVersion": "7.0.0.2",
             "fileVersion": "7.0.723.27404"
-          }
-        }
-      },
-      "System.Reflection.Emit/4.7.0": {},
-      "Tesseract/5.2.0": {
-        "dependencies": {
-          "System.Reflection.Emit": "4.7.0"
-        },
-        "runtime": {
-          "lib/netstandard2.0/Tesseract.dll": {
-            "assemblyVersion": "5.2.0.0",
-            "fileVersion": "5.2.0.0"
-          }
-        }
-      },
-      "Tesseract.Drawing/5.2.0": {
-        "dependencies": {
-          "System.Drawing.Common": "6.0.0",
-          "Tesseract": "5.2.0"
-        },
-        "runtime": {
-          "lib/netstandard2.0/Tesseract.Drawing.dll": {
-            "assemblyVersion": "5.2.0.0",
-            "fileVersion": "5.2.0.0"
           }
         }
       }
@@ -176,13 +140,6 @@
       "path": "google.apis.sheets.v4/1.72.0.3966",
       "hashPath": "google.apis.sheets.v4.1.72.0.3966.nupkg.sha512"
     },
-    "Microsoft.Win32.SystemEvents/6.0.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-hqTM5628jSsQiv+HGpiq3WKBl2c8v1KZfby2J6Pr7pEPlK9waPdgEO6b8A/+/xn/yZ9ulv8HuqK71ONy2tg67A==",
-      "path": "microsoft.win32.systemevents/6.0.0",
-      "hashPath": "microsoft.win32.systemevents.6.0.0.nupkg.sha512"
-    },
     "Newtonsoft.Json/13.0.4": {
       "type": "package",
       "serviceable": true,
@@ -190,47 +147,12 @@
       "path": "newtonsoft.json/13.0.4",
       "hashPath": "newtonsoft.json.13.0.4.nupkg.sha512"
     },
-    "System.CodeDom/7.0.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-GLltyqEsE5/3IE+zYRP5sNa1l44qKl9v+bfdMcwg+M9qnQf47wK3H0SUR/T+3N4JEQXF3vV4CSuuo0rsg+nq2A==",
-      "path": "system.codedom/7.0.0",
-      "hashPath": "system.codedom.7.0.0.nupkg.sha512"
-    },
-    "System.Drawing.Common/6.0.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-NfuoKUiP2nUWwKZN6twGqXioIe1zVD0RIj2t976A+czLHr2nY454RwwXs6JU9Htc6mwqL6Dn/nEL3dpVf2jOhg==",
-      "path": "system.drawing.common/6.0.0",
-      "hashPath": "system.drawing.common.6.0.0.nupkg.sha512"
-    },
     "System.Management/7.0.2": {
       "type": "package",
       "serviceable": true,
       "sha512": "sha512-/qEUN91mP/MUQmJnM5y5BdT7ZoPuVrtxnFlbJ8a3kBJGhe2wCzBfnPFtK2wTtEEcf3DMGR9J00GZZfg6HRI6yA==",
       "path": "system.management/7.0.2",
       "hashPath": "system.management.7.0.2.nupkg.sha512"
-    },
-    "System.Reflection.Emit/4.7.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-VR4kk8XLKebQ4MZuKuIni/7oh+QGFmZW3qORd1GvBq/8026OpW501SzT/oypwiQl4TvT8ErnReh/NzY9u+C6wQ==",
-      "path": "system.reflection.emit/4.7.0",
-      "hashPath": "system.reflection.emit.4.7.0.nupkg.sha512"
-    },
-    "Tesseract/5.2.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-YB7feJlrTWSXtK8+WaCcseGSPK/1r2d2FWeKGyndlrPwYClrzTlCoHD4/oQEUjKafmpkWlhTZZ7pxiRJYZgj6w==",
-      "path": "tesseract/5.2.0",
-      "hashPath": "tesseract.5.2.0.nupkg.sha512"
-    },
-    "Tesseract.Drawing/5.2.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-ORuub0AagnAGPjdhO8qNxI6Z+2dXUmqWFy6qSjQ+Wr56SxQiV2jNvGM9Tpluvd7F5vwJeqXEWQnzFvGL6iHfjA==",
-      "path": "tesseract.drawing/5.2.0",
-      "hashPath": "tesseract.drawing.5.2.0.nupkg.sha512"
     }
   }
 }

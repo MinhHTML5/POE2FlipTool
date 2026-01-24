@@ -112,6 +112,7 @@ namespace POE2FlipTool.Modules
         public WindowsUtil _windowsUtil;
         public InputHook _inputHook;
         public ColorUtil _colorUtil;
+        public OCRUtil _ocrUtil;
         public GoogleSheetUpdater _googleSheetUpdater;
 
         public TradeItem itemExaltedOrb = new TradeItem(ItemCategory.Currency, "Exalted Orb", 0, "B");
@@ -125,7 +126,7 @@ namespace POE2FlipTool.Modules
         private Queue<ICommand> _commandQueue = new();
 
 
-        public PricingChecker(Main main, WindowsUtil windowsUtil, InputHook inputHook, ColorUtil colorUtil, GoogleSheetUpdater googleSheetUpdater)
+        public PricingChecker(Main main, WindowsUtil windowsUtil, InputHook inputHook, ColorUtil colorUtil, OCRUtil ocrUtil, GoogleSheetUpdater googleSheetUpdater)
         {
             CATEGORY_COORD[(int)ItemCategory.Currency] = new PointF(0.136f, 0.226f);
             CATEGORY_COORD[(int)ItemCategory.Essences] = new PointF(0.136f, 0.264f);
@@ -146,6 +147,7 @@ namespace POE2FlipTool.Modules
             _windowsUtil = windowsUtil;
             _inputHook = inputHook;
             _colorUtil = colorUtil;
+            _ocrUtil = ocrUtil;
             _googleSheetUpdater = googleSheetUpdater;
         }
 
@@ -355,67 +357,46 @@ namespace POE2FlipTool.Modules
 
         public string ScreenShotAndGetCurrentTradeRatio(bool reverse = false)
         {
-            Bitmap bitmap = _colorUtil.PrintScreenAt(_ocrTopPoint, _ocrBottomPoint);
-            bitmap = _colorUtil.UpScale(bitmap, 2);
-            bitmap = _colorUtil.ToGrayscale(bitmap);
-            bitmap = _colorUtil.IncreaseContrast(bitmap, 2f);
-            //bitmap = _colorUtil.Blur(bitmap);
-            bitmap = _colorUtil.Threshold(bitmap, 100);
-            bitmap = _colorUtil.Invert(bitmap);
-            bitmap =_colorUtil.CropToBlackBounds(bitmap);
-            //bitmap = _colorUtil.VerticalDilation(bitmap);
-
+            Bitmap bitmap = _ocrUtil.PrintScreenAt(_ocrTopPoint, _ocrBottomPoint);
+            bitmap = _ocrUtil.UpScale(bitmap, 2);
+            bitmap = _ocrUtil.ToGrayscale(bitmap);
+            bitmap = _ocrUtil.IncreaseContrast(bitmap, 2f);
+            bitmap = _ocrUtil.Threshold(bitmap, 100);
+            bitmap = _ocrUtil.Invert(bitmap);
+            
             _main.SetDebugOCRResult(bitmap, "");
 
             string result = "";
+            List<Bitmap> chars = _ocrUtil.SplitCharacters(bitmap);
 
-            result = OCRUtil.OCRAsync(bitmap);
-            //result = OllamaVisionClient.Instance.Send(
-            //   bitmap,
-            //   "English only, Answer with the exact text shown. No explanation. No extra info");            result = result.Replace("\r", "").Replace("\n", "");
+            for (int i = 0; i < chars.Count; i++)
+            {
+                string charResult = _ocrUtil.RecognizeCharacter(chars[i]);
+                result += charResult;
 
+                //OCRDebug ocrDebug = new OCRDebug();
+                //ocrDebug.Init(chars[i], charResult);
+                //_main.AddOCRDebugControl(ocrDebug);
+            }
 
+            OCRDebug ocrDebug = new OCRDebug();
+            ocrDebug.Init(bitmap, result);
+            _main.AddOCRDebugControl(ocrDebug);
 
             int splitIndex = 0;
             if (result.Contains(':'))
             {
                 splitIndex = result.IndexOf(':');
             }
-            else if (result.Contains(" . "))
-            {
-                splitIndex = result.IndexOf(" . ");
-            }
-            else if (result.Contains(" ."))
-            {
-                splitIndex = result.IndexOf(" .");
-            }
-            else if (result.Contains(". "))
-            {
-                splitIndex = result.IndexOf(". ");
-            }
-            else if (result.Contains(" "))
-            {
-                splitIndex = result.IndexOf(" ");
-            }
-            else if (result.Contains("1.") && !result.Contains(".1"))
-            {
-                splitIndex = result.IndexOf("1.");
-            }
-            else if (result.Contains(".1") && !result.Contains("1."))
-            {
-                splitIndex = result.IndexOf(".1");
-            }
             else
             {
-                SaveWithNextIndex(bitmap);
-                throw new FormatException("Invalid ratio format - " + result);
+                throw new FormatException("Invalid text: " + result);
             }
 
             string[] parts = result.Split(result[splitIndex]);
             if (parts.Length != 2)
             {
-                SaveWithNextIndex(bitmap);
-                throw new FormatException("Invalid ratio format - " + result);
+                throw new FormatException("Invalid text: " + result);
             }
 
 
@@ -430,28 +411,6 @@ namespace POE2FlipTool.Modules
             string ratioString = "=" + (reverse ? (right + "/" + left) : (left + "/" + right));
             _main.SetErrorMessage(result + "    GG Formula: \"" + ratioString + "\"");
             return ratioString;
-        }
-
-        public void SaveWithNextIndex(Bitmap bitmap)
-        {
-            Regex FileIndexRegex = new Regex(@"^sample_(\d+)\.png$", RegexOptions.IgnoreCase);
-
-            Directory.CreateDirectory("errorImages");
-
-            int nextIndex = Directory
-                .EnumerateFiles("errorImages", "sample_*.png")
-                .Select(path => Path.GetFileName(path))
-                .Select(name =>
-                {
-                    var match = FileIndexRegex.Match(name);
-                    return match.Success ? int.Parse(match.Groups[1].Value) : -1;
-                })
-                .Where(i => i >= 0)
-                .DefaultIfEmpty(-1)
-                .Max() + 1;
-
-            string filePath = Path.Combine("errorImages", $"sample_{nextIndex}.png");
-            bitmap.Save(filePath);
         }
     }
 }
