@@ -13,9 +13,24 @@ namespace POE2FlipTool.Modules
 {
     internal class ConfigReader
     {
-        public static List<TradeItem> ReadConfig()
+        public static List<TradeCategory> ReadCategoryConfig()
         {
-            string json = File.ReadAllText("CONFIG.json");
+            string json = File.ReadAllText("config/CategoryConfig.json");
+
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                Converters = { new JsonStringEnumConverter() }
+            };
+
+            List<TradeCategory> categories = JsonSerializer.Deserialize<List<TradeCategory>>(json, options);
+
+            return categories;
+        }
+
+        public static List<TradeItem> ReadItemConfig()
+        {
+            string json = File.ReadAllText("config/ItemConfig.json");
 
             var options = new JsonSerializerOptions
             {

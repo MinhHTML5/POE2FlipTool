@@ -70,7 +70,7 @@ namespace POE2FlipTool.Modules
     public class PricingChecker
     {
         public const int SLEEP_TIME = 250;
-        public const int SLEEP_TIME_WAIT = 500;
+        public const int SLEEP_TIME_WAIT = 750;
 
         public PointF OCR_TOP = new PointF(0.30645312f, 0.17222223f);
         public PointF OCR_BOTTOM = new PointF(0.34664064f, 0.192f);
@@ -85,7 +85,6 @@ namespace POE2FlipTool.Modules
             new PointF(0.473f, 0.184f)
         };
 
-        public PointF[] CATEGORY_COORD = new PointF[(int)ItemCategory.Count];
         public float CATEGORY_HAVE_OFFSET_Y = 0.037f;
 
         public const int SELL_FOR_DIVINE_Y = 11;
@@ -97,13 +96,16 @@ namespace POE2FlipTool.Modules
 
 
 
+        private List<TradeItem> _items = new List<TradeItem>();
+        private List<TradeCategory> _categories = new List<TradeCategory>();
+
         private Point _ocrTopPoint = new Point();
         private Point _ocrBottomPoint = new Point();
         private Point _iWantPoint = new Point();
         private Point _iHavePoint = new Point();
         private Point _regexPoint = new Point();
 
-        private Point[] _categoryPoint = new Point[(int)ItemCategory.Count];
+        
         private Point[] _itemSelectPoint = new Point[3];
 
         private int _categoryHaveOffsetY = 0;
@@ -115,9 +117,9 @@ namespace POE2FlipTool.Modules
         public OCRUtil _ocrUtil;
         public GoogleSheetUpdater _googleSheetUpdater;
 
-        public TradeItem itemExaltedOrb = new TradeItem(ItemCategory.Currency, "Exalted Orb", 0, "B");
-        public TradeItem itemChaosOrb = new TradeItem(ItemCategory.Currency, "Chaos Orb", 0, "B");
-        public TradeItem itemDivineOrb = new TradeItem(ItemCategory.Currency, "Divine Orb", 1, "B");
+        public TradeItem itemExaltedOrb = new TradeItem("Currency", "Exalted Orb", 0, "B");
+        public TradeItem itemChaosOrb = new TradeItem("Currency", "Chaos Orb", 0, "B");
+        public TradeItem itemDivineOrb = new TradeItem("Currency", "Divine Orb", 1, "B");
 
 
 
@@ -128,21 +130,6 @@ namespace POE2FlipTool.Modules
 
         public PricingChecker(Main main, WindowsUtil windowsUtil, InputHook inputHook, ColorUtil colorUtil, OCRUtil ocrUtil, GoogleSheetUpdater googleSheetUpdater)
         {
-            CATEGORY_COORD[(int)ItemCategory.Currency] = new PointF(0.136f, 0.226f);
-            CATEGORY_COORD[(int)ItemCategory.Essences] = new PointF(0.136f, 0.264f);
-            CATEGORY_COORD[(int)ItemCategory.Delirium] = new PointF(0.136f, 0.299f);
-            CATEGORY_COORD[(int)ItemCategory.Breach] = new PointF(0.136f, 0.336f);
-            CATEGORY_COORD[(int)ItemCategory.Ritual] = new PointF(0.136f, 0.377f);
-            CATEGORY_COORD[(int)ItemCategory.Expedition] = new PointF(0.136f, 0.416f);
-            CATEGORY_COORD[(int)ItemCategory.Abyss] = new PointF(0.136f, 0.451f);
-            CATEGORY_COORD[(int)ItemCategory.Incursion] = new PointF(0.136f, 0.491f);
-            CATEGORY_COORD[(int)ItemCategory.Fragments] = new PointF(0.136f, 0.524f);
-            CATEGORY_COORD[(int)ItemCategory.Runes] = new PointF(0.136f, 0.562f);
-            CATEGORY_COORD[(int)ItemCategory.SoulCores] = new PointF(0.136f, 0.6f);
-            CATEGORY_COORD[(int)ItemCategory.Idols] = new PointF(0.136f, 0.637f);
-            CATEGORY_COORD[(int)ItemCategory.UncutGems] = new PointF(0.136f, 0.676f);
-            CATEGORY_COORD[(int)ItemCategory.Gems] = new PointF(0.136f, 0.709f);
-
             _main = main;
             _windowsUtil = windowsUtil;
             _inputHook = inputHook;
@@ -159,10 +146,6 @@ namespace POE2FlipTool.Modules
             _iHavePoint = _colorUtil.GetPixelPosition(I_HAVE.X, I_HAVE.Y);
             _regexPoint = _colorUtil.GetPixelPosition(REGEX.X, REGEX.Y);
 
-            for (int i = 0; i < (int)ItemCategory.Count; i++)
-            {
-                _categoryPoint[i] = _colorUtil.GetPixelPosition(CATEGORY_COORD[i].X, CATEGORY_COORD[i].Y);
-            }
             for (int i = 0; i < 3; i++)
             {
                 _itemSelectPoint[i] = _colorUtil.GetPixelPosition(ITEM_SELECT[i].X, ITEM_SELECT[i].Y);
@@ -202,7 +185,29 @@ namespace POE2FlipTool.Modules
         public void Start()
         {
             _started = true;
-            List<TradeItem> items = ConfigReader.ReadConfig();
+            _items = ConfigReader.ReadItemConfig();
+            _categories = ConfigReader.ReadCategoryConfig();
+
+            TradeCategory category = _categories.Find(c => c.name == itemExaltedOrb.category);
+            itemExaltedOrb.categoryCoord = _colorUtil.GetPixelPosition(category.x, category.y);
+            category = _categories.Find(c => c.name == itemChaosOrb.category);
+            itemChaosOrb.categoryCoord = _colorUtil.GetPixelPosition(category.x, category.y);
+            category = _categories.Find(c => c.name == itemDivineOrb.category);
+            itemDivineOrb.categoryCoord = _colorUtil.GetPixelPosition(category.x, category.y);
+
+            for (int i = 0; i < (int)_items.Count; i++)
+            {
+                TradeItem tradeItem = _items[i];
+                category = _categories.Find(c => c.name == tradeItem.category);
+                if (category != null)
+                {
+                    tradeItem.categoryCoord = _colorUtil.GetPixelPosition(category.x, category.y);
+                }
+                else
+                {
+                    throw new Exception("Category not found for item: " + tradeItem.name);
+                }
+            }
 
             // Here is where the check script begin
             // Select something on both side
@@ -236,9 +241,9 @@ namespace POE2FlipTool.Modules
             ScreenShotAndUpdateGoogleSheet("B2");
 
             // Go through each trade item and update trading value
-            for(int i = 0; i < items.Count; i++)
+            for(int i = 0; i < _items.Count; i++)
             {
-                TradeItem tradeItem = items[i];
+                TradeItem tradeItem = _items[i];
 
                 // The code below is not inversed. For example, if we want to sell for divine
                 // We search for "I want tradeItem" and "I have divine" to get the lowest price
@@ -283,7 +288,7 @@ namespace POE2FlipTool.Modules
             SendLeftClick();
             Sleep(SLEEP_TIME);
             // ================================================================================================================
-            MoveMouse(_categoryPoint[(int)have.category].X, _categoryPoint[(int)have.category].Y + _categoryHaveOffsetY);
+            MoveMouse(have.categoryCoord.X, have.categoryCoord.Y + _categoryHaveOffsetY);
             Sleep(SLEEP_TIME);
             SendLeftClick();
             Sleep(SLEEP_TIME);
@@ -308,7 +313,7 @@ namespace POE2FlipTool.Modules
             SendLeftClick();
             Sleep(SLEEP_TIME);
             // ================================================================================================================
-            MoveMouse(_categoryPoint[(int)want.category].X, _categoryPoint[(int)want.category].Y);
+            MoveMouse(want.categoryCoord.X, want.categoryCoord.Y);
             Sleep(SLEEP_TIME);
             SendLeftClick();
             Sleep(SLEEP_TIME);
