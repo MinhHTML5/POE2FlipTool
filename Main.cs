@@ -1,3 +1,4 @@
+using POE2FlipTool.DataModel;
 using POE2FlipTool.Modules;
 using POE2FlipTool.Utilities;
 using System.Diagnostics;
@@ -17,6 +18,7 @@ namespace POE2FlipTool
         private ColorUtil _colorUtil;
         private OCRUtil _ocrUtil;
 
+        private GeneralConfig _generalConfig;
         private GoogleSheetUpdater _googleSheetUpdater;
         private PricingChecker _pricingChecker;
 
@@ -56,7 +58,9 @@ namespace POE2FlipTool
             _timer.Start();
             _stopwatch.Start();
 
-            _googleSheetUpdater = new GoogleSheetUpdater();
+            _generalConfig = ConfigReader.ReadGeneralConfig();
+
+            _googleSheetUpdater = new GoogleSheetUpdater(_generalConfig.googleSheetID, _generalConfig.googleSheetName);
             _pricingChecker = new PricingChecker(this, _windowsUtil, _inputHook, _colorUtil, _ocrUtil, _googleSheetUpdater);
             _pricingChecker.Init();
         }
@@ -91,7 +95,6 @@ namespace POE2FlipTool
                     }
                     catch (Exception ex)
                     {
-                        SetErrorMessage(ex.Message);
                     }
                 }
             }

@@ -11,18 +11,20 @@ namespace POE2FlipTool.Modules
 {
     public class GoogleSheetUpdater
     {
-        private const string SPREAD_SHEET_ID = "1qakIAj_pZL--0fiQij6rGEKlCVXQxpgQkAJWzaLxNK0";
-        private const string SHEET_NAME = "MinhFlip";
-
         private SheetsService _service;
+        private string _spreadsheetId;
+        private string _sheetName;
 
-        public GoogleSheetUpdater()
+        public GoogleSheetUpdater(string spreadsheetId, string sheetName)
         {
             GoogleCredential credential;
             using (var stream = new FileStream("google_service.json", FileMode.Open, FileAccess.Read))
             {
                 credential = GoogleCredential.FromStream(stream).CreateScoped(SheetsService.Scope.Spreadsheets);
             }
+
+            _spreadsheetId = spreadsheetId;
+            _sheetName = sheetName;
 
             _service = new SheetsService(new BaseClientService.Initializer()
             {
@@ -34,12 +36,12 @@ namespace POE2FlipTool.Modules
         public void UpdateCell (string cell, object value)
         {
             // Define request parameters.
-            var range = $"{SHEET_NAME}!{cell}";
+            var range = $"{_sheetName}!{cell}";
             var valueRange = new Google.Apis.Sheets.v4.Data.ValueRange
             {
                 Values = new List<IList<object>> { new List<object> { value } }
             };
-            var updateRequest = _service.Spreadsheets.Values.Update(valueRange, SPREAD_SHEET_ID, range);
+            var updateRequest = _service.Spreadsheets.Values.Update(valueRange, _spreadsheetId, range);
             updateRequest.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
             updateRequest.ExecuteAsync();
         }
