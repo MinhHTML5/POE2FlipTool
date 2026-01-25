@@ -215,13 +215,19 @@ namespace POE2FlipTool.Modules
             MoveMouse(_itemSelectPoint[0].X, _itemSelectPoint[0].Y); SendLeftClick();
 
             // Update div -> exalt value
-            ClickHave(itemDivineOrb);
-            ClickWant(itemExaltedOrb);
-            ScreenShotAndUpdateGoogleSheet(itemExaltedOrb, "B1");
+            if (_main.ShouldCheckExalt())
+            {
+                ClickHave(itemDivineOrb);
+                ClickWant(itemExaltedOrb);
+                ScreenShotAndUpdateGoogleSheet(itemExaltedOrb, "B1");
+            }
 
             // Update div -> chaos value
-            ClickWant(itemChaosOrb);
-            ScreenShotAndUpdateGoogleSheet(itemChaosOrb, "B2");
+            if (_main.ShouldCheckChaos())
+            {
+                ClickWant(itemChaosOrb);
+                ScreenShotAndUpdateGoogleSheet(itemChaosOrb, "B2");
+            }
 
             // Go through each trade item and update trading value
             for(int i = 0; i < _items.Count; i++)
@@ -235,19 +241,32 @@ namespace POE2FlipTool.Modules
                 ClickWant(tradeItem);
                 ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + SELL_FOR_DIVINE_Y, true);
 
-                ClickHave(itemExaltedOrb);
-                ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + SELL_FOR_EXALT_Y, true);
+                if (_main.ShouldCheckExalt())
+                {
+                    ClickHave(itemExaltedOrb);
+                    ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + SELL_FOR_EXALT_Y, true);
+                }
 
-                ClickHave(itemChaosOrb);
-                ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + SELL_FOR_CHAOS_Y, true);
+                if (_main.ShouldCheckChaos())
+                {
+                    ClickHave(itemChaosOrb);
+                    ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + SELL_FOR_CHAOS_Y, true);
+                }
 
 
                 ClickHave(tradeItem);
-                ClickWant(itemExaltedOrb);
-                ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + BUY_WITH_EXALT_Y);
 
-                ClickWant(itemChaosOrb);
-                ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + BUY_WITH_CHAOS_Y);
+                if (_main.ShouldCheckExalt())
+                {
+                    ClickWant(itemExaltedOrb);
+                    ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + BUY_WITH_EXALT_Y);
+                }
+
+                if (_main.ShouldCheckChaos())
+                {
+                    ClickWant(itemChaosOrb);
+                    ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + BUY_WITH_CHAOS_Y);
+                }
 
                 ClickWant(itemDivineOrb);
                 ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + BUY_WITH_DIVINE_Y);

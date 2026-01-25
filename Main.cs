@@ -58,6 +58,23 @@ namespace POE2FlipTool
             _timer.Start();
             _stopwatch.Start();
 
+            DialogResult result = MessageBox.Show(
+                "Load POE2 config? (Select no and it'll choose POE1)",
+                "POE2?",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question
+            );
+            if (result == DialogResult.Yes)
+            {
+                ConfigReader.poeConfig = "poe2";
+                lblPOEChoosed.Text = "POE2";
+            }
+            else
+            {
+                ConfigReader.poeConfig = "poe1";
+                lblPOEChoosed.Text = "POE1";
+            }
+
             _generalConfig = ConfigReader.ReadGeneralConfig();
 
             _googleSheetUpdater = new GoogleSheetUpdater(_generalConfig.googleSheetID, _generalConfig.googleSheetName);
@@ -127,6 +144,16 @@ namespace POE2FlipTool
             flpDebug.ScrollControlIntoView(ocrDebug);
         }
 
+        public bool ShouldCheckChaos()
+        {
+            return chkCheckChaos.Checked;
+        }
+
+        public bool ShouldCheckExalt()
+        {
+            return chkCheckExalt.Checked;
+        }
+
         private void MainLoop()
         {
             // This variable turn off all submodule from doing logic, but still let them to count cooldown
@@ -139,7 +166,12 @@ namespace POE2FlipTool
                 Stop();
             }
 
-            _pricingChecker.MainLoop(deltaTime);
+            if (_pricingChecker != null) _pricingChecker.MainLoop(deltaTime);
+        }
+
+        private void btnClearDebug_Click(object sender, EventArgs e)
+        {
+            flpDebug.Controls.Clear();
         }
     }
 }
