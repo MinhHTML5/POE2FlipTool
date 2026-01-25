@@ -70,7 +70,7 @@ namespace POE2FlipTool
                 .DefaultIfEmpty(-1)
                 .Max() + 1;
 
-            string filePath = Path.Combine("errorImages", $"sample_{nextIndex}.png");
+            string filePath = Path.Combine("ocrErrors", $"error_{nextIndex}.png");
             bitmap.Save(filePath);
         }
     }
