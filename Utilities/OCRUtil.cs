@@ -318,7 +318,7 @@ namespace POE2FlipTool.Utilities
             Bitmap dst = new Bitmap(w, h);
             using var g = Graphics.FromImage(dst);
             g.Clear(Color.White);
-            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBilinear;
+            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
             g.DrawImage(bmp, 0, 0, w, h);
             return dst;
         }
@@ -343,7 +343,7 @@ namespace POE2FlipTool.Utilities
             return (double)same / total;
         }
 
-        public bool AreOcrSimilar(Bitmap img1, Bitmap img2, double threshold = 0.9)
+        public bool AreOcrSimilar(Bitmap img1, Bitmap img2, double threshold = 0.7)
         {
             using var b1 = Normalize(img1);
             using var b2 = Normalize(img2);

@@ -54,7 +54,7 @@ namespace POE2FlipTool
 
         public void SaveWithNextIndex(Bitmap bitmap)
         {
-            Regex FileIndexRegex = new Regex(@"^sample_(\d+)\.png$", RegexOptions.IgnoreCase);
+            Regex FileIndexRegex = new Regex(@"^error_(\d+)\.png$", RegexOptions.IgnoreCase);
 
             Directory.CreateDirectory("ocrErrors");
 
