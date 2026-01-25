@@ -116,17 +116,6 @@ namespace POE2FlipTool
             _pricingChecker.Stop();
         }
 
-        public void SetDebugOCRResult(Bitmap bitmap, string text)
-        {
-            pctDebug.Image = bitmap;
-            lblDebug.Text = text;
-        }
-
-        public void SetErrorMessage(string message)
-        {
-            lblDebug.Text = message;
-        }
-
         public void AddOCRDebugControl(OCRDebug ocrDebug)
         {
             flpDebug.SuspendLayout();
@@ -134,7 +123,6 @@ namespace POE2FlipTool
             flpDebug.ResumeLayout();
             flpDebug.ScrollControlIntoView(ocrDebug);
         }
-
 
         private void MainLoop()
         {

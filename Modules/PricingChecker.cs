@@ -69,8 +69,8 @@ namespace POE2FlipTool.Modules
 
     public class PricingChecker
     {
-        public const int SLEEP_TIME = 250;
-        public const int SLEEP_TIME_WAIT = 750;
+        public const int DELAY_BETWEEN_ACTION = 250;
+        public const int DELAY_BEFORE_SCREENSHOT = 500;
 
         public PointF OCR_TOP = new PointF(0.30645312f, 0.17222223f);
         public PointF OCR_BOTTOM = new PointF(0.34664064f, 0.192f);
@@ -172,9 +172,6 @@ namespace POE2FlipTool.Modules
             }
             catch (Exception ex)
             {
-                _commandQueue.Clear();
-                _main.Stop();
-                _main.SetErrorMessage(ex.Message);
             }
         }
 
@@ -211,34 +208,19 @@ namespace POE2FlipTool.Modules
             }
 
             // Here is where the check script begin
-            // Select something on both side
-            MoveMouse(_iHavePoint.X, _iHavePoint.Y);
-            Sleep(SLEEP_TIME);
-            SendLeftClick();
-            Sleep(SLEEP_TIME);
-
-            MoveMouse(_itemSelectPoint[0].X, _itemSelectPoint[0].Y);
-            Sleep(SLEEP_TIME);
-            SendLeftClick();
-            Sleep(SLEEP_TIME);
-
-            MoveMouse(_iWantPoint.X, _iWantPoint.Y);
-            Sleep(SLEEP_TIME);
-            SendLeftClick();
-            Sleep(SLEEP_TIME);
-
-            MoveMouse(_itemSelectPoint[0].X, _itemSelectPoint[0].Y);
-            Sleep(SLEEP_TIME);
-            SendLeftClick();
+            // Select something on both side so the popular category show up
+            MoveMouse(_iHavePoint.X, _iHavePoint.Y); SendLeftClick();
+            MoveMouse(_itemSelectPoint[0].X, _itemSelectPoint[0].Y); SendLeftClick();
+            MoveMouse(_iWantPoint.X, _iWantPoint.Y); SendLeftClick();
+            MoveMouse(_itemSelectPoint[0].X, _itemSelectPoint[0].Y); SendLeftClick();
 
             // Update div -> exalt value
-            ClickWantHave(itemExaltedOrb, itemDivineOrb);
-            Sleep(SLEEP_TIME_WAIT);
+            ClickHave(itemDivineOrb);
+            ClickWant(itemExaltedOrb);
             ScreenShotAndUpdateGoogleSheet(itemExaltedOrb, "B1");
 
             // Update div -> chaos value
-            ClickWantHave(itemChaosOrb, itemDivineOrb);
-            Sleep(SLEEP_TIME_WAIT);
+            ClickWant(itemChaosOrb);
             ScreenShotAndUpdateGoogleSheet(itemChaosOrb, "B2");
 
             // Go through each trade item and update trading value
@@ -249,90 +231,57 @@ namespace POE2FlipTool.Modules
                 // The code below is not inversed. For example, if we want to sell for divine
                 // We search for "I want tradeItem" and "I have divine" to get the lowest price
                 // someone else are willing to sell. That means we can sell around that price to.
-
-                ClickWantHave(tradeItem, itemDivineOrb);
-                Sleep(SLEEP_TIME_WAIT);
+                ClickHave(itemDivineOrb);
+                ClickWant(tradeItem);
                 ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + SELL_FOR_DIVINE_Y, true);
 
-                ClickWantHave(itemExaltedOrb, tradeItem);
-                Sleep(SLEEP_TIME_WAIT);
-                ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + BUY_WITH_EXALT_Y);
-
-                ClickWantHave(itemChaosOrb, tradeItem);
-                Sleep(SLEEP_TIME_WAIT);
-                ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + BUY_WITH_CHAOS_Y);
-
-                ClickWantHave(itemDivineOrb, tradeItem);
-                Sleep(SLEEP_TIME_WAIT);
-                ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + BUY_WITH_DIVINE_Y);
-
-                ClickWantHave(tradeItem, itemExaltedOrb);
-                Sleep(SLEEP_TIME_WAIT);
+                ClickHave(itemExaltedOrb);
                 ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + SELL_FOR_EXALT_Y, true);
 
-                ClickWantHave(tradeItem, itemChaosOrb);
-                Sleep(SLEEP_TIME_WAIT);
+                ClickHave(itemChaosOrb);
                 ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + SELL_FOR_CHAOS_Y, true);
+
+
+                ClickHave(tradeItem);
+                ClickWant(itemExaltedOrb);
+                ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + BUY_WITH_EXALT_Y);
+
+                ClickWant(itemChaosOrb);
+                ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + BUY_WITH_CHAOS_Y);
+
+                ClickWant(itemDivineOrb);
+                ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + BUY_WITH_DIVINE_Y);
             }
         }
 
 
-        
 
-        public void ClickWantHave(TradeItem want, TradeItem have) 
+        public void ClickWant(TradeItem want) 
         {
-            Sleep(SLEEP_TIME);
-
-            // ================================================================================================================
-            MoveMouse(_iHavePoint.X, _iHavePoint.Y);
-            Sleep(SLEEP_TIME);
-            SendLeftClick();
-            Sleep(SLEEP_TIME);
-            // ================================================================================================================
-            MoveMouse(have.categoryCoord.X, have.categoryCoord.Y + _categoryHaveOffsetY);
-            Sleep(SLEEP_TIME);
-            SendLeftClick();
-            Sleep(SLEEP_TIME);
-            // ================================================================================================================
-            MoveMouse(_regexPoint.X, _regexPoint.Y);
-            Sleep(SLEEP_TIME);
-            SendLeftClick();
-            Sleep(SLEEP_TIME);
-            // ================================================================================================================
-            TypeItemName(have.name);
-            Sleep(SLEEP_TIME);
-            // ================================================================================================================
-            MoveMouse(_itemSelectPoint[have.itemSelectIndex].X, _itemSelectPoint[have.itemSelectIndex].Y);
-            Sleep(SLEEP_TIME);
-            SendLeftClick();
-            Sleep(SLEEP_TIME);
-            // ================================================================================================================
-
-            // ================================================================================================================
             MoveMouse(_iWantPoint.X, _iWantPoint.Y);
-            Sleep(SLEEP_TIME);
             SendLeftClick();
-            Sleep(SLEEP_TIME);
-            // ================================================================================================================
             MoveMouse(want.categoryCoord.X, want.categoryCoord.Y);
-            Sleep(SLEEP_TIME);
             SendLeftClick();
-            Sleep(SLEEP_TIME);
-            // ================================================================================================================
             MoveMouse(_regexPoint.X, _regexPoint.Y);
-            Sleep(SLEEP_TIME);
             SendLeftClick();
-            Sleep(SLEEP_TIME);
-            // ================================================================================================================
             TypeItemName(want.name);
-            Sleep(SLEEP_TIME);
-            // ================================================================================================================
             MoveMouse(_itemSelectPoint[want.itemSelectIndex].X, _itemSelectPoint[want.itemSelectIndex].Y);
-            Sleep(SLEEP_TIME);
             SendLeftClick();
-            Sleep(SLEEP_TIME);
-            // ================================================================================================================
         }
+
+        public void ClickHave(TradeItem have) 
+        {
+            MoveMouse(_iHavePoint.X, _iHavePoint.Y);
+            SendLeftClick();
+            MoveMouse(have.categoryCoord.X, have.categoryCoord.Y + _categoryHaveOffsetY);
+            SendLeftClick();
+            MoveMouse(_regexPoint.X, _regexPoint.Y);
+            SendLeftClick();
+            TypeItemName(have.name);
+            MoveMouse(_itemSelectPoint[have.itemSelectIndex].X, _itemSelectPoint[have.itemSelectIndex].Y);
+            SendLeftClick();
+        }
+
 
         public void Sleep(int milliseconds)
         {
@@ -342,22 +291,26 @@ namespace POE2FlipTool.Modules
         public void MoveMouse(int x, int y)
         {
             _commandQueue.Enqueue(new ActionCommand(() => _inputHook.MoveMouse(x, y)));
+            _commandQueue.Enqueue(new DelayCommand(DELAY_BETWEEN_ACTION));
         }
 
         public void SendLeftClick()
         {
             _commandQueue.Enqueue(new ActionCommand(() => _inputHook.SendLeftClick()));
+            _commandQueue.Enqueue(new DelayCommand(DELAY_BETWEEN_ACTION));
         }
 
         public void TypeItemName(string name)
         {
             _commandQueue.Enqueue(new ActionCommand(() => Clipboard.SetText(name)));
             _commandQueue.Enqueue(new ActionCommand(() => _inputHook.PressKey(Keys.V, true)));
+            _commandQueue.Enqueue(new DelayCommand(DELAY_BETWEEN_ACTION));
         }
 
         
         public void ScreenShotAndUpdateGoogleSheet(TradeItem item, string cell, bool inverseScreenShotValue = false)
         {
+            _commandQueue.Enqueue(new DelayCommand(DELAY_BEFORE_SCREENSHOT));
             _commandQueue.Enqueue(new ActionCommand(() => _googleSheetUpdater.UpdateCell(cell, ScreenShotAndGetCurrentTradeRatio(inverseScreenShotValue, item.name))));
         }
 
@@ -369,8 +322,6 @@ namespace POE2FlipTool.Modules
             bitmap = _ocrUtil.IncreaseContrast(bitmap, 2f);
             bitmap = _ocrUtil.Threshold(bitmap, 100);
             bitmap = _ocrUtil.Invert(bitmap);
-            
-            _main.SetDebugOCRResult(bitmap, "");
 
             string result = "";
             List<Bitmap> chars = _ocrUtil.SplitCharacters(bitmap);
@@ -379,10 +330,6 @@ namespace POE2FlipTool.Modules
             {
                 string charResult = _ocrUtil.RecognizeCharacter(chars[i]);
                 result += charResult;
-
-                //OCRDebug ocrDebug = new OCRDebug();
-                //ocrDebug.Init(chars[i], charResult);
-                //_main.AddOCRDebugControl(ocrDebug);
             }
 
             OCRDebug ocrDebug = new OCRDebug();
@@ -415,7 +362,6 @@ namespace POE2FlipTool.Modules
             }
 
             string ratioString = "=" + (reverse ? (right + "/" + left) : (left + "/" + right));
-            _main.SetErrorMessage(result + "    GG Formula: \"" + ratioString + "\"");
             return ratioString;
         }
     }
