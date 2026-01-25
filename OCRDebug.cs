@@ -10,6 +10,11 @@ namespace POE2FlipTool
             InitializeComponent();
         }
 
+        public void SetItemName(string name)
+        {
+            lblItemName.Text = name;
+        }
+
         public void SetDebugImage(Image img)
         {
             pctOCRDebug.Image = img;
@@ -20,8 +25,9 @@ namespace POE2FlipTool
             lblOCRDebug.Text = text;
         }
 
-        public void Init (Image img, string text)
+        public void Init (string name, Image img, string text)
         {
+            SetItemName(name);
             SetDebugImage(img);
             SetDebugText(text);
         }
@@ -50,10 +56,10 @@ namespace POE2FlipTool
         {
             Regex FileIndexRegex = new Regex(@"^sample_(\d+)\.png$", RegexOptions.IgnoreCase);
 
-            Directory.CreateDirectory("errorImages");
+            Directory.CreateDirectory("ocrErrors");
 
             int nextIndex = Directory
-                .EnumerateFiles("errorImages", "sample_*.png")
+                .EnumerateFiles("ocrErrors", "error_*.png")
                 .Select(path => Path.GetFileName(path))
                 .Select(name =>
                 {

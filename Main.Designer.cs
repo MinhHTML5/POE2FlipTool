@@ -36,14 +36,17 @@
             lblTutorial3 = new Label();
             lblTutorial4 = new Label();
             flpDebug = new FlowLayoutPanel();
+            lblTutorial5 = new Label();
+            lblTutorial6 = new Label();
             ((System.ComponentModel.ISupportInitialize)pctDebug).BeginInit();
             SuspendLayout();
             // 
             // pctDebug
             // 
-            pctDebug.Location = new Point(12, 108);
+            pctDebug.BorderStyle = BorderStyle.FixedSingle;
+            pctDebug.Location = new Point(12, 191);
             pctDebug.Name = "pctDebug";
-            pctDebug.Size = new Size(341, 89);
+            pctDebug.Size = new Size(341, 72);
             pctDebug.SizeMode = PictureBoxSizeMode.CenterImage;
             pctDebug.TabIndex = 0;
             pctDebug.TabStop = false;
@@ -51,7 +54,7 @@
             // lblDebugTitle
             // 
             lblDebugTitle.AutoSize = true;
-            lblDebugTitle.Location = new Point(12, 209);
+            lblDebugTitle.Location = new Point(12, 162);
             lblDebugTitle.Name = "lblDebugTitle";
             lblDebugTitle.Size = new Size(95, 15);
             lblDebugTitle.TabIndex = 1;
@@ -60,7 +63,7 @@
             // lblDebug
             // 
             lblDebug.AutoSize = true;
-            lblDebug.Location = new Point(113, 209);
+            lblDebug.Location = new Point(113, 162);
             lblDebug.Name = "lblDebug";
             lblDebug.Size = new Size(43, 15);
             lblDebug.TabIndex = 2;
@@ -105,19 +108,39 @@
             // flpDebug
             // 
             flpDebug.AutoScroll = true;
-            flpDebug.BorderStyle = BorderStyle.FixedSingle;
+            flpDebug.BorderStyle = BorderStyle.Fixed3D;
             flpDebug.FlowDirection = FlowDirection.TopDown;
             flpDebug.Location = new Point(367, 9);
             flpDebug.Name = "flpDebug";
-            flpDebug.Size = new Size(450, 1086);
+            flpDebug.Size = new Size(305, 436);
             flpDebug.TabIndex = 7;
             flpDebug.WrapContents = false;
+            // 
+            // lblTutorial5
+            // 
+            lblTutorial5.AutoSize = true;
+            lblTutorial5.Location = new Point(12, 279);
+            lblTutorial5.Name = "lblTutorial5";
+            lblTutorial5.Size = new Size(147, 15);
+            lblTutorial5.TabIndex = 8;
+            lblTutorial5.Text = "- OCR history shown ---->";
+            // 
+            // lblTutorial6
+            // 
+            lblTutorial6.AutoSize = true;
+            lblTutorial6.Location = new Point(12, 305);
+            lblTutorial6.Name = "lblTutorial6";
+            lblTutorial6.Size = new Size(293, 15);
+            lblTutorial6.TabIndex = 9;
+            lblTutorial6.Text = "- Press \"Wrong\" will save the image in OCRError folder";
             // 
             // Main
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(829, 1107);
+            ClientSize = new Size(684, 455);
+            Controls.Add(lblTutorial6);
+            Controls.Add(lblTutorial5);
             Controls.Add(flpDebug);
             Controls.Add(lblTutorial4);
             Controls.Add(lblTutorial3);
@@ -127,7 +150,7 @@
             Controls.Add(lblDebugTitle);
             Controls.Add(pctDebug);
             Name = "Main";
-            Text = "Main";
+            Text = "2";
             Load += Main_Load;
             ((System.ComponentModel.ISupportInitialize)pctDebug).EndInit();
             ResumeLayout(false);
@@ -144,5 +167,7 @@
         private Label lblTutorial3;
         private Label lblTutorial4;
         private FlowLayoutPanel flpDebug;
+        private Label lblTutorial5;
+        private Label lblTutorial6;
     }
 }

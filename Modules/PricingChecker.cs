@@ -121,6 +121,7 @@ namespace POE2FlipTool.Modules
         public TradeItem itemChaosOrb = new TradeItem("Currency", "Chaos Orb", 0, "B");
         public TradeItem itemDivineOrb = new TradeItem("Currency", "Divine Orb", 1, "B");
 
+        private TradeItem _processingItem = null;
 
 
 
@@ -233,12 +234,12 @@ namespace POE2FlipTool.Modules
             // Update div -> exalt value
             ClickWantHave(itemExaltedOrb, itemDivineOrb);
             Sleep(SLEEP_TIME_WAIT);
-            ScreenShotAndUpdateGoogleSheet("B1");
+            ScreenShotAndUpdateGoogleSheet(itemExaltedOrb, "B1");
 
             // Update div -> chaos value
             ClickWantHave(itemChaosOrb, itemDivineOrb);
             Sleep(SLEEP_TIME_WAIT);
-            ScreenShotAndUpdateGoogleSheet("B2");
+            ScreenShotAndUpdateGoogleSheet(itemChaosOrb, "B2");
 
             // Go through each trade item and update trading value
             for(int i = 0; i < _items.Count; i++)
@@ -251,27 +252,27 @@ namespace POE2FlipTool.Modules
 
                 ClickWantHave(tradeItem, itemDivineOrb);
                 Sleep(SLEEP_TIME_WAIT);
-                ScreenShotAndUpdateGoogleSheet(tradeItem.column + SELL_FOR_DIVINE_Y, true);
+                ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + SELL_FOR_DIVINE_Y, true);
 
                 ClickWantHave(itemExaltedOrb, tradeItem);
                 Sleep(SLEEP_TIME_WAIT);
-                ScreenShotAndUpdateGoogleSheet(tradeItem.column + BUY_WITH_EXALT_Y);
+                ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + BUY_WITH_EXALT_Y);
 
                 ClickWantHave(itemChaosOrb, tradeItem);
                 Sleep(SLEEP_TIME_WAIT);
-                ScreenShotAndUpdateGoogleSheet(tradeItem.column + BUY_WITH_CHAOS_Y);
+                ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + BUY_WITH_CHAOS_Y);
 
                 ClickWantHave(itemDivineOrb, tradeItem);
                 Sleep(SLEEP_TIME_WAIT);
-                ScreenShotAndUpdateGoogleSheet(tradeItem.column + BUY_WITH_DIVINE_Y);
+                ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + BUY_WITH_DIVINE_Y);
 
                 ClickWantHave(tradeItem, itemExaltedOrb);
                 Sleep(SLEEP_TIME_WAIT);
-                ScreenShotAndUpdateGoogleSheet(tradeItem.column + SELL_FOR_EXALT_Y, true);
+                ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + SELL_FOR_EXALT_Y, true);
 
                 ClickWantHave(tradeItem, itemChaosOrb);
                 Sleep(SLEEP_TIME_WAIT);
-                ScreenShotAndUpdateGoogleSheet(tradeItem.column + SELL_FOR_CHAOS_Y, true);
+                ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + SELL_FOR_CHAOS_Y, true);
             }
         }
 
@@ -355,12 +356,12 @@ namespace POE2FlipTool.Modules
         }
 
         
-        public void ScreenShotAndUpdateGoogleSheet(string cell, bool inverseScreenShotValue = false)
+        public void ScreenShotAndUpdateGoogleSheet(TradeItem item, string cell, bool inverseScreenShotValue = false)
         {
-            _commandQueue.Enqueue(new ActionCommand(() => _googleSheetUpdater.UpdateCell(cell, ScreenShotAndGetCurrentTradeRatio(inverseScreenShotValue))));
+            _commandQueue.Enqueue(new ActionCommand(() => _googleSheetUpdater.UpdateCell(cell, ScreenShotAndGetCurrentTradeRatio(inverseScreenShotValue, item.name))));
         }
 
-        public string ScreenShotAndGetCurrentTradeRatio(bool reverse = false)
+        public string ScreenShotAndGetCurrentTradeRatio(bool reverse = false, string itemName = "Custom")
         {
             Bitmap bitmap = _ocrUtil.PrintScreenAt(_ocrTopPoint, _ocrBottomPoint);
             bitmap = _ocrUtil.UpScale(bitmap, 2);
@@ -385,7 +386,7 @@ namespace POE2FlipTool.Modules
             }
 
             OCRDebug ocrDebug = new OCRDebug();
-            ocrDebug.Init(bitmap, result);
+            ocrDebug.Init(itemName, bitmap, result);
             _main.AddOCRDebugControl(ocrDebug);
 
             int splitIndex = 0;

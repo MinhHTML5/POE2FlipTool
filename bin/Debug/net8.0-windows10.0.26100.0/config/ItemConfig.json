@@ -88,5 +88,11 @@
     "name": "Perfect Chaos Orb",
     "itemSelectIndex": 1,
     "column": "P"
+  },
+  {
+    "category": "Breach",
+    "name": "Breach splinter",
+    "itemSelectIndex": 1,
+    "column": "Q"
   }
 ]
