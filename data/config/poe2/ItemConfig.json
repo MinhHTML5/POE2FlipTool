@@ -1,0 +1,98 @@
+[
+  {
+    "category": "Abyss",
+    "name": "Omen of abyssal echoes",
+    "itemSelectIndex": 1,
+    "column": "B"
+  },
+  {
+    "category": "UncutGems",
+    "name": "\"uncut skill gem\" 20",
+    "itemSelectIndex": 1,
+    "column": "C"
+  },
+  {
+    "category": "Breach",
+    "name": "Xoph's Catalyst",
+    "itemSelectIndex": 1,
+    "column": "D"
+  },
+  {
+    "category": "Breach",
+    "name": "Esh's Catalyst",
+    "itemSelectIndex": 1,
+    "column": "E"
+  },
+  {
+    "category": "Breach",
+    "name": "Tul's Catalyst",
+    "itemSelectIndex": 1,
+    "column": "F"
+  },
+  {
+    "category": "Breach",
+    "name": "Reaver Catalyst",
+    "itemSelectIndex": 1,
+    "column": "G"
+  },
+  {
+    "category": "Breach",
+    "name": "Sibilant Catalyst",
+    "itemSelectIndex": 1,
+    "column": "H"
+  },
+  {
+    "category": "Breach",
+    "name": "Skittering Catalyst",
+    "itemSelectIndex": 1,
+    "column": "I"
+  },
+  {
+    "category": "Breach",
+    "name": "Neural Catalyst",
+    "itemSelectIndex": 1,
+    "column": "J"
+  },
+  {
+    "category": "Incursion",
+    "name": "Vaal Cultivation Orb",
+    "itemSelectIndex": 1,
+    "column": "K"
+  },
+  {
+    "category": "Expedition",
+    "name": "Runic Splinter",
+    "itemSelectIndex": 1,
+    "column": "L"
+  },
+  {
+    "category": "Currency",
+    "name": "Fracturing Orb",
+    "itemSelectIndex": 1,
+    "column": "M"
+  },
+  {
+    "category": "Ritual",
+    "name": "Omen of whittling",
+    "itemSelectIndex": 1,
+    "column": "N"
+  },
+  {
+    "category": "Ritual",
+    "name": "Omen of catalysing",
+    "itemSelectIndex": 1,
+    "column": "O"
+  },
+  {
+    "category": "Currency",
+    "name": "Perfect Chaos Orb",
+    "itemSelectIndex": 1,
+    "column": "P"
+  },
+  {
+    "category": "Breach",
+    "name": "Breach splinter",
+    "itemSelectIndex": 1,
+    "column": "Q"
+  }
+]

@@ -7,18 +7,18 @@ namespace POE2FlipTool.Utilities
 {
     public class OCRUtil
     {
-        Bitmap sample0 = new Bitmap("ocrSample/0.png");
-        Bitmap sample1 = new Bitmap("ocrSample/1.png");
-        Bitmap sample2 = new Bitmap("ocrSample/2.png");
-        Bitmap sample3 = new Bitmap("ocrSample/3.png");
-        Bitmap sample4 = new Bitmap("ocrSample/4.png");
-        Bitmap sample5 = new Bitmap("ocrSample/5.png");
-        Bitmap sample6 = new Bitmap("ocrSample/6.png");
-        Bitmap sample7 = new Bitmap("ocrSample/7.png");
-        Bitmap sample8 = new Bitmap("ocrSample/8.png");
-        Bitmap sample9 = new Bitmap("ocrSample/9.png");
-        Bitmap sampleDot = new Bitmap("ocrSample/dot.png");
-        Bitmap sampleColon = new Bitmap("ocrSample/colon.png");
+        Bitmap sample0 = new Bitmap("data/ocrSample/0.png");
+        Bitmap sample1 = new Bitmap("data/ocrSample/1.png");
+        Bitmap sample2 = new Bitmap("data/ocrSample/2.png");
+        Bitmap sample3 = new Bitmap("data/ocrSample/3.png");
+        Bitmap sample4 = new Bitmap("data/ocrSample/4.png");
+        Bitmap sample5 = new Bitmap("data/ocrSample/5.png");
+        Bitmap sample6 = new Bitmap("data/ocrSample/6.png");
+        Bitmap sample7 = new Bitmap("data/ocrSample/7.png");
+        Bitmap sample8 = new Bitmap("data/ocrSample/8.png");
+        Bitmap sample9 = new Bitmap("data/ocrSample/9.png");
+        Bitmap sampleDot = new Bitmap("data/ocrSample/dot.png");
+        Bitmap sampleColon = new Bitmap("data/ocrSample/colon.png");
 
 
         public OCRUtil()
