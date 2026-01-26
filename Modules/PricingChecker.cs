@@ -1,9 +1,7 @@
-﻿using POE2FlipTool.DataModel;
+﻿using ninja.poe;
+using POE2FlipTool.DataModel;
 using POE2FlipTool.Utilities;
-using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
 using System.Globalization;
-using System.Text.RegularExpressions;
 
 
 namespace POE2FlipTool.Modules
@@ -98,6 +96,8 @@ namespace POE2FlipTool.Modules
 
         private List<TradeItem> _items = new List<TradeItem>();
         private List<TradeCategory> _categories = new List<TradeCategory>();
+        private List<TradedItem> _poeNinjaItems = new List<TradedItem>();
+        private SheetConfig _sheetConfig = new SheetConfig(); // Can be overridden by config file
 
         private Point _ocrTopPoint = new Point();
         private Point _ocrBottomPoint = new Point();
@@ -105,7 +105,7 @@ namespace POE2FlipTool.Modules
         private Point _iHavePoint = new Point();
         private Point _regexPoint = new Point();
 
-        
+
         private Point[] _itemSelectPoint = new Point[3];
 
         private int _categoryHaveOffsetY = 0;
@@ -185,6 +185,7 @@ namespace POE2FlipTool.Modules
             _started = true;
             _items = ConfigReader.ReadItemConfig();
             _categories = ConfigReader.ReadCategoryConfig();
+            _poeNinjaItems = ConfigReader.GetPoeNinjaList(ConfigReader.poeConfig) ?? new List<TradedItem>();
 
             TradeCategory category = _categories.Find(c => c.name == itemExaltedOrb.category);
             itemExaltedOrb.categoryCoord = _colorUtil.GetPixelPosition(category.x, category.y);
@@ -230,7 +231,7 @@ namespace POE2FlipTool.Modules
             }
 
             // Go through each trade item and update trading value
-            for(int i = 0; i < _items.Count; i++)
+            for (int i = 0; i < _items.Count; i++)
             {
                 TradeItem tradeItem = _items[i];
 
@@ -275,7 +276,7 @@ namespace POE2FlipTool.Modules
 
 
 
-        public void ClickWant(TradeItem want) 
+        public void ClickWant(TradeItem want)
         {
             MoveMouse(_iWantPoint.X, _iWantPoint.Y);
             SendLeftClick();
@@ -288,7 +289,7 @@ namespace POE2FlipTool.Modules
             SendLeftClick();
         }
 
-        public void ClickHave(TradeItem have) 
+        public void ClickHave(TradeItem have)
         {
             MoveMouse(_iHavePoint.X, _iHavePoint.Y);
             SendLeftClick();
@@ -309,7 +310,11 @@ namespace POE2FlipTool.Modules
 
         public void MoveMouse(int x, int y)
         {
-            _commandQueue.Enqueue(new ActionCommand(() => _inputHook.MoveMouse(x, y)));
+            // Add some random offset to avoid detection
+            Random random = new Random();
+            var rndIntX = random.Next(-5, 5);
+            var rndIntY = random.Next(-2, 2);
+            _commandQueue.Enqueue(new ActionCommand(() => _inputHook.MoveMouse(x + rndIntX, y + rndIntY)));
             _commandQueue.Enqueue(new DelayCommand(DELAY_BETWEEN_ACTION));
         }
 
@@ -326,7 +331,7 @@ namespace POE2FlipTool.Modules
             _commandQueue.Enqueue(new DelayCommand(DELAY_BETWEEN_ACTION));
         }
 
-        
+
         public void ScreenShotAndUpdateGoogleSheet(TradeItem item, string cell, bool inverseScreenShotValue = false)
         {
             _commandQueue.Enqueue(new DelayCommand(DELAY_BEFORE_SCREENSHOT));

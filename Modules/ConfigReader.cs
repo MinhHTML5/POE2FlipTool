@@ -1,13 +1,7 @@
 ﻿using POE2FlipTool.DataModel;
-using System;
-using System.Collections.Generic;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
+using ninja.poe;
 
 namespace POE2FlipTool.Modules
 {
@@ -54,6 +48,12 @@ namespace POE2FlipTool.Modules
             List<TradeItem> items = JsonSerializer.Deserialize<List<TradeItem>>(json, options);
 
             return items;
+        }
+
+        public static List<TradedItem>? GetPoeNinjaList(string poeVersion)
+        {
+            var ninja = new Poe2Ninja(Console.WriteLine);
+            return ninja.Economy.GetTradedItemsAboveVolume(1000, Poe2EconomyType.Currency | Poe2EconomyType.Fragments | Poe2EconomyType.Breach | Poe2EconomyType.Abyss | Poe2EconomyType.UncutGems)?.ToList();
         }
     }
 }
