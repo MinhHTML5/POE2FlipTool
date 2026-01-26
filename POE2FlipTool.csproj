@@ -18,10 +18,4 @@
 	  </Content>
   </ItemGroup>
 
-  <ItemGroup>
-    <Reference Include="PoeNinjaWrapper">
-      <HintPath>Libs\PoeNinjaWrapper.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
 </Project>

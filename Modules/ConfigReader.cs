@@ -52,7 +52,7 @@ namespace POE2FlipTool.Modules
 
         public static List<TradedItem>? GetPoeNinjaList(string poeVersion)
         {
-            var ninja = new Poe2Ninja(Console.WriteLine);
+            var ninja = new Poe2Ninja();
             return ninja.Economy.GetTradedItemsAboveVolume(1000, Poe2EconomyType.Currency | Poe2EconomyType.Fragments | Poe2EconomyType.Breach | Poe2EconomyType.Abyss | Poe2EconomyType.UncutGems)?.ToList();
         }
     }
