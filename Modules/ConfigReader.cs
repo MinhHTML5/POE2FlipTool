@@ -16,7 +16,7 @@ namespace POE2FlipTool.Modules
         public static string poeConfig = "poe1";
         public static GeneralConfig ReadGeneralConfig()
         {
-            string json = File.ReadAllText("config/" + poeConfig + "/GeneralConfig.json");
+            string json = File.ReadAllText("data/config/" + poeConfig + "/GeneralConfig.json");
             var options = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true,
@@ -28,7 +28,7 @@ namespace POE2FlipTool.Modules
 
         public static List<TradeCategory> ReadCategoryConfig()
         {
-            string json = File.ReadAllText("config/" + poeConfig + "/CategoryConfig.json");
+            string json = File.ReadAllText("data/config/" + poeConfig + "/CategoryConfig.json");
 
             var options = new JsonSerializerOptions
             {
@@ -43,7 +43,7 @@ namespace POE2FlipTool.Modules
 
         public static List<TradeItem> ReadItemConfig()
         {
-            string json = File.ReadAllText("config/" + poeConfig + "/ItemConfig.json");
+            string json = File.ReadAllText("data/config/" + poeConfig + "/ItemConfig.json");
 
             var options = new JsonSerializerOptions
             {

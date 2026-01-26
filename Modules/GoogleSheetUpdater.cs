@@ -18,7 +18,7 @@ namespace POE2FlipTool.Modules
         public GoogleSheetUpdater(string spreadsheetId, string sheetName)
         {
             GoogleCredential credential;
-            using (var stream = new FileStream("google_service.json", FileMode.Open, FileAccess.Read))
+            using (var stream = new FileStream("data/google_service.json", FileMode.Open, FileAccess.Read))
             {
                 credential = GoogleCredential.FromStream(stream).CreateScoped(SheetsService.Scope.Spreadsheets);
             }
