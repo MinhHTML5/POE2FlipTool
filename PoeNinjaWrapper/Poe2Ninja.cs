@@ -39,7 +39,14 @@ public sealed class Poe2Ninja : IDisposable
 
         _api = new ApiHelper(_http);
 
-        InitializeAsync().GetAwaiter().GetResult();
+        var thread = new Thread(() =>
+        {
+            InitializeAsync().GetAwaiter().GetResult();
+        });
+
+        thread.IsBackground = true;
+        thread.Start();
+        thread.Join(); // blocks ONLY this thread, not UI sync context
     }
 
     // ---------------- Initialization ----------------
