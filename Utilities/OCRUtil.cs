@@ -5,6 +5,11 @@ using System.Drawing.Imaging;
 
 namespace POE2FlipTool.Utilities
 {
+    public class OCRSample
+    {
+        public Bitmap Bitmap { get; set; }
+        public string Character { get; set; }
+    }
     public class OCRUtil
     {
         Bitmap sample0 = new Bitmap("ocrSample/0.png");
@@ -20,39 +25,40 @@ namespace POE2FlipTool.Utilities
         Bitmap sampleDot = new Bitmap("ocrSample/dot.png");
         Bitmap sampleColon = new Bitmap("ocrSample/colon.png");
 
+        List<OCRSample> ocrSamples = new List<OCRSample>();
+
 
         public OCRUtil()
         {
-            sample0 = Normalize(sample0);
-            sample1 = Normalize(sample1);
-            sample2 = Normalize(sample2);
-            sample3 = Normalize(sample3);
-            sample4 = Normalize(sample4);
-            sample5 = Normalize(sample5);
-            sample6 = Normalize(sample6);
-            sample7 = Normalize(sample7);
-            sample8 = Normalize(sample8);
-            sample9 = Normalize(sample9);
-            sampleDot = Normalize(sampleDot);
-            sampleColon = Normalize(sampleColon);
+            ocrSamples.Add(new OCRSample { Bitmap = Normalize(sample0), Character = "0" });
+            ocrSamples.Add(new OCRSample { Bitmap = Normalize(sample1), Character = "1" });
+            ocrSamples.Add(new OCRSample { Bitmap = Normalize(sample2), Character = "2" });
+            ocrSamples.Add(new OCRSample { Bitmap = Normalize(sample3), Character = "3" });
+            ocrSamples.Add(new OCRSample { Bitmap = Normalize(sample4), Character = "4" });
+            ocrSamples.Add(new OCRSample { Bitmap = Normalize(sample5), Character = "5" });
+            ocrSamples.Add(new OCRSample { Bitmap = Normalize(sample6), Character = "6" });
+            ocrSamples.Add(new OCRSample { Bitmap = Normalize(sample7), Character = "7" });
+            ocrSamples.Add(new OCRSample { Bitmap = Normalize(sample8), Character = "8" });
+            ocrSamples.Add(new OCRSample { Bitmap = Normalize(sample9), Character = "9" });
+            ocrSamples.Add(new OCRSample { Bitmap = Normalize(sampleDot), Character = "." });
+            ocrSamples.Add(new OCRSample { Bitmap = Normalize(sampleColon), Character = ":" });
         }
 
         public string RecognizeCharacter(Bitmap bitmap)
         {
             Bitmap normalized = Normalize(bitmap);
-            if (AreOcrSimilar(normalized, sample0)) return "0";
-            if (AreOcrSimilar(normalized, sample1)) return "1";
-            if (AreOcrSimilar(normalized, sample2)) return "2";
-            if (AreOcrSimilar(normalized, sample3)) return "3";
-            if (AreOcrSimilar(normalized, sample4)) return "4";
-            if (AreOcrSimilar(normalized, sample5)) return "5";
-            if (AreOcrSimilar(normalized, sample6)) return "6";
-            if (AreOcrSimilar(normalized, sample7)) return "7";
-            if (AreOcrSimilar(normalized, sample8)) return "8";
-            if (AreOcrSimilar(normalized, sample9)) return "9";
-            if (AreOcrSimilar(normalized, sampleDot)) return ".";
-            if (AreOcrSimilar(normalized, sampleColon)) return ":";
-            return "";
+            string bestMatch = "";
+            double bestSimilarity = 0.0;
+            foreach (var sample in ocrSamples)
+            {
+                double similarity = Similarity(normalized, sample.Bitmap);
+                if (similarity > bestSimilarity)
+                {
+                    bestSimilarity = similarity;
+                    bestMatch = sample.Character;
+                }
+            }
+            return bestMatch;
         }
 
 
@@ -343,12 +349,9 @@ namespace POE2FlipTool.Utilities
             return (double)same / total;
         }
 
-        public bool AreOcrSimilar(Bitmap img1, Bitmap img2, double threshold = 0.7)
+        public bool AreOcrSimilar(Bitmap img1, Bitmap img2, double threshold = 0.9)
         {
-            using var b1 = Normalize(img1);
-            using var b2 = Normalize(img2);
-
-            double similarity = Similarity(b1, b2);
+            double similarity = Similarity(img1, img2);
             return similarity >= threshold;
         }
     }
