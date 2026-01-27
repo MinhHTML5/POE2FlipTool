@@ -140,11 +140,11 @@ namespace POE2FlipTool.Utilities
                     {
                         _controlPressing = isDown;
                     }
-                    else 
+                    else
                     {
                         _onKeyEvent((Keys)vk, isDown, _controlPressing);
                     }
-      
+
                 }
             }
             finally
@@ -287,7 +287,59 @@ namespace POE2FlipTool.Utilities
             SendInput((uint)inputs.Length, inputs, Marshal.SizeOf(typeof(INPUT)));
         }
 
-        public void ShowMouseCursor (bool show)
+        public void MoveMouseSmooth(int targetX, int targetY, int durationMs = 250)
+        {
+            int screenWidth = GetSystemMetrics(0);
+            int screenHeight = GetSystemMetrics(1);
+
+            Point start = Cursor.Position;
+
+            int steps = Math.Max(15, durationMs / 8);
+            const int JITTER_THRESHOLD = 300; // pixels
+
+            for (int i = 1; i <= steps; i++)
+            {
+                double t = (double)i / steps;
+
+                // Smoothstep easing (human-like)
+                double eased = t * t * (3 - 2 * t);
+
+                int x = (int)(start.X + (targetX - start.X) * eased);
+                int y = (int)(start.Y + (targetY - start.Y) * eased);
+
+                // ---- distance-based jitter gate ----
+                int dxRemain = targetX - x;
+                int dyRemain = targetY - y;
+                double distance = Math.Sqrt(dxRemain * dxRemain + dyRemain * dyRemain);
+
+                if (distance >= JITTER_THRESHOLD)
+                {
+                    x += Random.Shared.Next(0, 2);
+                    y += Random.Shared.Next(0, 2);
+                }
+
+                int absX = x * 65535 / screenWidth;
+                int absY = y * 65535 / screenHeight;
+
+                INPUT input = new INPUT
+                {
+                    type = INPUT_MOUSE,
+                    mi = new MOUSEINPUT
+                    {
+                        dx = absX,
+                        dy = absY,
+                        dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE
+                    }
+                };
+
+                SendInput(1, new[] { input }, Marshal.SizeOf(typeof(INPUT)));
+
+                Thread.Sleep(Random.Shared.Next(5, 12));
+            }
+        }
+
+
+        public void ShowMouseCursor(bool show)
         {
             ShowCursor(show);
         }

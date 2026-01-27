@@ -48,6 +48,13 @@ namespace POE2FlipTool.Utilities
             return new Point((int)(screenWidth * xRatio), (int)(screenHeight * yRatio));
         }
 
+        public Point GetPixelPosition(PointF p)
+        {
+            int screenWidth = Screen.PrimaryScreen.Bounds.Width;
+            int screenHeight = Screen.PrimaryScreen.Bounds.Height;
+            return new Point((int)(screenWidth * p.X), (int)(screenHeight * p.Y));
+        }
+
         public Point GetWindowsSize()
         {
             int screenWidth = Screen.PrimaryScreen.Bounds.Width;

@@ -58,22 +58,22 @@ namespace POE2FlipTool
             _timer.Start();
             _stopwatch.Start();
 
-            DialogResult result = MessageBox.Show(
-                "Load POE2 config? (Select no and it'll choose POE1)",
-                "POE2?",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question
-            );
-            if (result == DialogResult.Yes)
-            {
+            //DialogResult result = MessageBox.Show(
+            //    "Load POE2 config? (Select no and it'll choose POE1)",
+            //    "POE2?",
+            //    MessageBoxButtons.YesNo,
+            //    MessageBoxIcon.Question
+            //);
+            //if (result == DialogResult.Yes)
+            //{
                 ConfigReader.poeConfig = "poe2";
                 lblPOEChoosed.Text = "POE2";
-            }
-            else
-            {
-                ConfigReader.poeConfig = "poe1";
-                lblPOEChoosed.Text = "POE1";
-            }
+            //}
+            //else
+            //{
+            //    ConfigReader.poeConfig = "poe1";
+            //    lblPOEChoosed.Text = "POE1";
+            //}
 
             _generalConfig = ConfigReader.ReadGeneralConfig();
 

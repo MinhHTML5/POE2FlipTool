@@ -80,7 +80,7 @@
             // 
             // lblItemName
             // 
-            lblItemName.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblItemName.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
             lblItemName.Location = new Point(8, 1);
             lblItemName.Name = "lblItemName";
             lblItemName.Size = new Size(154, 23);

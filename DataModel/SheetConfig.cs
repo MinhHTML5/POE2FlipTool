@@ -1,7 +1,4 @@
-﻿using System;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-
-namespace POE2FlipTool.DataModel
+﻿namespace POE2FlipTool.DataModel
 {
     public class SheetConfig
     {

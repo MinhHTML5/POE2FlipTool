@@ -2,6 +2,7 @@
 using POE2FlipTool.DataModel;
 using POE2FlipTool.Utilities;
 using System.Globalization;
+using Windows.Foundation.Diagnostics;
 
 
 namespace POE2FlipTool.Modules
@@ -69,12 +70,14 @@ namespace POE2FlipTool.Modules
     {
         public const int DELAY_BETWEEN_ACTION = 250;
         public const int DELAY_BEFORE_SCREENSHOT = 500;
+        public const int DELAY_AFTER_MOVEMOUSE = 1000;
 
-        public PointF OCR_TOP = new PointF(0.30645312f, 0.17222223f);
-        public PointF OCR_BOTTOM = new PointF(0.34664064f, 0.192f);
+        public PointF OCR_AVAIL_TOP = new PointF(0.283f, 0.22f);
+        public PointF OCR_AVAIL_BOTTOM = new PointF(0.365f, 0.345f);
         public PointF I_WANT = new PointF(0.19f, 0.22f);
         public PointF I_HAVE = new PointF(0.44f, 0.22f);
         public PointF REGEX = new PointF(0.36f, 0.87f);
+        public PointF TRADE_DETAIL = new PointF(0.37f, 0.16f);
 
         public PointF[] ITEM_SELECT = new PointF[]
         {
@@ -106,8 +109,8 @@ namespace POE2FlipTool.Modules
         private List<TradedItem> _poeNinjaItems = new List<TradedItem>();
         private SheetConfig _sheetConfig = new SheetConfig(); // Can be overridden by config file
 
-        private Point _ocrTopPoint = new Point();
-        private Point _ocrBottomPoint = new Point();
+        private Point _ocrAvailableTopPoint = new Point();
+        private Point _ocrAvailableBottomPoint = new Point();
         private Point _iWantPoint = new Point();
         private Point _iHavePoint = new Point();
         private Point _regexPoint = new Point();
@@ -127,12 +130,8 @@ namespace POE2FlipTool.Modules
         public TradeItem itemExaltedOrb = new TradeItem("Currency", "Exalted Orb");
         public TradeItem itemChaosOrb = new TradeItem("Currency", "Chaos Orb");
         public TradeItem itemDivineOrb = new TradeItem("Currency", "Divine Orb");
+        public List<MarketValue> _marketValues = new List<MarketValue>();
 
-        private TradeItem _processingItem = null;
-
-
-
-        private bool _started = false;
         private Queue<ICommand> _commandQueue = new();
 
 
@@ -148,8 +147,8 @@ namespace POE2FlipTool.Modules
 
         public void Init()
         {
-            _ocrTopPoint = _colorUtil.GetPixelPosition(OCR_TOP.X, OCR_TOP.Y);
-            _ocrBottomPoint = _colorUtil.GetPixelPosition(OCR_BOTTOM.X, OCR_BOTTOM.Y);
+            _ocrAvailableTopPoint = _colorUtil.GetPixelPosition(OCR_AVAIL_TOP.X, OCR_AVAIL_TOP.Y);
+            _ocrAvailableBottomPoint = _colorUtil.GetPixelPosition(OCR_AVAIL_BOTTOM.X, OCR_AVAIL_BOTTOM.Y);
             _iWantPoint = _colorUtil.GetPixelPosition(I_WANT.X, I_WANT.Y);
             _iHavePoint = _colorUtil.GetPixelPosition(I_HAVE.X, I_HAVE.Y);
             _regexPoint = _colorUtil.GetPixelPosition(REGEX.X, REGEX.Y);
@@ -190,32 +189,24 @@ namespace POE2FlipTool.Modules
         }
         public void Start()
         {
-            _started = true;
             _items = ConfigReader.ReadItemConfig();
             _categories = ConfigReader.ReadCategoryConfig();
             _poeNinjaItems = ConfigReader.GetPoeNinjaList(ConfigReader.poeConfig) ?? new List<TradedItem>();
 
             // Here is where the check script begin
             // Select something on both side so the popular category show up
-            MoveMouse(_iHavePoint.X, _iHavePoint.Y); SendLeftClick();
-            MoveMouse(_itemSelectPoint[0].X, _itemSelectPoint[0].Y); SendLeftClick();
-            MoveMouse(_iWantPoint.X, _iWantPoint.Y); SendLeftClick();
-            MoveMouse(_itemSelectPoint[0].X, _itemSelectPoint[0].Y); SendLeftClick();
+            CommandMoveMouse(_iHavePoint.X, _iHavePoint.Y); CommandSendLeftClick();
+            CommandMoveMouse(_itemSelectPoint[0].X, _itemSelectPoint[0].Y); CommandSendLeftClick();
+            CommandMoveMouse(_iWantPoint.X, _iWantPoint.Y); CommandSendLeftClick();
+            CommandMoveMouse(_itemSelectPoint[0].X, _itemSelectPoint[0].Y); CommandSendLeftClick();
 
             // Update div -> exalt value
-            if (_main.ShouldCheckExalt())
-            {
-                ClickHave(itemDivineOrb);
-                ClickWant(itemExaltedOrb);
-                ScreenShotAndUpdateGoogleSheet(itemExaltedOrb.name, _sheetConfig.ConvertRateExaltsSheetPosition);
-            }
-
-            // Update div -> chaos value
-            if (_main.ShouldCheckChaos())
-            {
-                ClickWant(itemChaosOrb);
-                ScreenShotAndUpdateGoogleSheet(itemChaosOrb.name, _sheetConfig.ConvertRateChaosSheetPosition);
-            }
+            ClickHave(itemDivineOrb);
+            ClickWant(itemExaltedOrb);
+            CommandGetTradeRatio(itemExaltedOrb.name, itemDivineOrb.name);
+            //Update div -> chaos value
+            ClickWant(itemChaosOrb);
+            CommandGetTradeRatio(itemChaosOrb.name, itemDivineOrb.name);
 
             // Go through each trade item and update trading value
             //for (int i = 0; i < _items.Count; i++)
@@ -226,112 +217,103 @@ namespace POE2FlipTool.Modules
                 // Skip core currencies
                 if (CORE_CURRENCIES.Contains(item.Name)) continue;
 
-                var tradeItem = item.ToTradeItem();
-                // The code below is not inversed. For example, if we want to sell for divine
-                // We search for "I want tradeItem" and "I have divine" to get the lowest price
-                // someone else are willing to sell. That means we can sell around that price to.
-                UpdateGoogleSheet(_sheetConfig.Type + operatingLine, item.Poe2EconomyType.ToString());
-                UpdateGoogleSheet(_sheetConfig.Name + operatingLine, item.Name);
+                PriceCheck(item);
 
-                ClickWant(tradeItem);
-                ClickHave(itemDivineOrb);
-                ScreenShotAndUpdateGoogleSheet(item.Name, _sheetConfig.BuyRateDivine + operatingLine, true);
-
-                if (_main.ShouldCheckExalt())
-                {
-                    ClickHave(itemExaltedOrb);
-                    ScreenShotAndUpdateGoogleSheet(item.Name, _sheetConfig.BuyRateExalt + operatingLine, true);
-                }
-
-                if (_main.ShouldCheckChaos())
-                {
-                    ClickHave(itemChaosOrb);
-                    ScreenShotAndUpdateGoogleSheet(item.Name, _sheetConfig.BuyRateChaos + operatingLine, true);
-                }
-
-
-                ClickHave(tradeItem);
-
-                if (_main.ShouldCheckExalt())
-                {
-                    ClickWant(itemExaltedOrb);
-                    ScreenShotAndUpdateGoogleSheet(item.Name, _sheetConfig.SellRateExalt + operatingLine);
-                }
-
-                if (_main.ShouldCheckChaos())
-                {
-                    ClickWant(itemChaosOrb);
-                    ScreenShotAndUpdateGoogleSheet(item.Name, _sheetConfig.SellRateChaos + operatingLine);
-                }
-
-                ClickWant(itemDivineOrb);
-                ScreenShotAndUpdateGoogleSheet(item.Name, _sheetConfig.SellRateDivine + operatingLine);
                 operatingLine++;
             }
         }
 
+        private void PriceCheck(TradedItem item)
+        {
+            var tradeItem = item.ToTradeItem();
 
+            ClickWant(tradeItem);
+            ClickHave(itemDivineOrb);
+            CommandGetTradeRatio(item.Name, itemDivineOrb.name);
+            ClickHave(itemExaltedOrb);
+            CommandGetTradeRatio(item.Name, itemExaltedOrb.name);
+            ClickHave(itemChaosOrb);
+            CommandGetTradeRatio(item.Name, itemChaosOrb.name);
+        }
 
         public void ClickWant(TradeItem want)
         {
-            MoveMouse(_iWantPoint.X, _iWantPoint.Y);
-            SendLeftClick();
-            MoveMouse(GetCategoryCoord(want.category));
-            SendLeftClick();
-            MoveMouse(_regexPoint.X, _regexPoint.Y);
-            SendLeftClick();
-            TypeItemName(want.name);
-            MoveMouse(_itemSelectPoint[want.itemSelectIndex].X, _itemSelectPoint[want.itemSelectIndex].Y);
-            SendLeftClick();
+            CommandMoveMouse(_iWantPoint.X, _iWantPoint.Y);
+            CommandSendLeftClick();
+            CommandMoveMouse(GetCategoryCoord(want.category));
+            CommandSendLeftClick();
+            CommandMoveMouse(_regexPoint.X, _regexPoint.Y);
+            CommandSendLeftClick();
+            CommandTypeItemName(want.name);
+            CommandMoveMouse(_itemSelectPoint[want.itemSelectIndex].X, _itemSelectPoint[want.itemSelectIndex].Y);
+            CommandSendLeftClick();
         }
 
         public void ClickHave(TradeItem have)
         {
-            MoveMouse(_iHavePoint.X, _iHavePoint.Y);
-            SendLeftClick();
+            CommandMoveMouse(_iHavePoint.X, _iHavePoint.Y);
+            CommandSendLeftClick();
             var catCoord = GetCategoryCoord(have.category);
-            MoveMouse(catCoord.X, catCoord.Y + _categoryHaveOffsetY);
-            SendLeftClick();
-            MoveMouse(_regexPoint.X, _regexPoint.Y);
-            SendLeftClick();
-            TypeItemName(have.name);
-            MoveMouse(_itemSelectPoint[have.itemSelectIndex].X, _itemSelectPoint[have.itemSelectIndex].Y);
-            SendLeftClick();
+            CommandMoveMouse(catCoord.X, catCoord.Y + _categoryHaveOffsetY);
+            CommandSendLeftClick();
+            CommandMoveMouse(_regexPoint.X, _regexPoint.Y);
+            CommandSendLeftClick();
+            CommandTypeItemName(have.name);
+            CommandMoveMouse(_itemSelectPoint[have.itemSelectIndex].X, _itemSelectPoint[have.itemSelectIndex].Y);
+            CommandSendLeftClick();
         }
 
 
-        public void Sleep(int milliseconds)
+        public void MoveMouse(Point p)
+        {
+            Random random = new Random();
+            var rndIntX = random.Next(-5, 5);
+            var rndIntY = random.Next(-2, 2);
+            _inputHook.MoveMouse(p.X + rndIntX, p.Y + rndIntY);
+        }
+
+        public void CommandSleep(int milliseconds)
         {
             _commandQueue.Enqueue(new DelayCommand(milliseconds));
         }
 
-        public void MoveMouse(Point p)
+        public void CommandMoveMouse(Point p)
         {
             // Add some random offset to avoid detection
             Random random = new Random();
             var rndIntX = random.Next(-5, 5);
             var rndIntY = random.Next(-2, 2);
-            _commandQueue.Enqueue(new ActionCommand(() => _inputHook.MoveMouse(p.X + rndIntX, p.Y + rndIntY)));
-            _commandQueue.Enqueue(new DelayCommand(DELAY_BETWEEN_ACTION));
+            _commandQueue.Enqueue(new ActionCommand(() => _inputHook.MoveMouseSmooth(p.X + rndIntX, p.Y + rndIntY)));
         }
 
-        public void MoveMouse(int x, int y)
+        public void CommandMoveMouse(int x, int y)
         {
             // Add some random offset to avoid detection
             Random random = new Random();
             var rndIntX = random.Next(-5, 5);
             var rndIntY = random.Next(-2, 2);
-            _commandQueue.Enqueue(new ActionCommand(() => _inputHook.MoveMouse(x + rndIntX, y + rndIntY)));
-            _commandQueue.Enqueue(new DelayCommand(DELAY_BETWEEN_ACTION));
+            _commandQueue.Enqueue(new ActionCommand(() => _inputHook.MoveMouseSmooth(x + rndIntX, y + rndIntY)));
         }
 
-        public void SendLeftClick()
+        public void CommandSendLeftClick(bool ctrl = false)
         {
-            _commandQueue.Enqueue(new ActionCommand(() => _inputHook.SendLeftClick()));
+            _commandQueue.Enqueue(new ActionCommand(() => _inputHook.SendLeftClick(ctrl)));
             _commandQueue.Enqueue(new DelayCommand(DELAY_BETWEEN_ACTION));
         }
 
-        public void TypeItemName(string name)
+        public void CommandSendKeyDown(Keys key)
+        {
+            _commandQueue.Enqueue(new ActionCommand(() => _inputHook.SendKeyDown(key)));
+            _commandQueue.Enqueue(new DelayCommand(DELAY_BETWEEN_ACTION));
+        }
+
+        public void CommandSendKeyUp(Keys key)
+        {
+            _commandQueue.Enqueue(new ActionCommand(() => _inputHook.SendKeyUp(key)));
+            _commandQueue.Enqueue(new DelayCommand(DELAY_BETWEEN_ACTION));
+        }
+
+        public void CommandTypeItemName(string name)
         {
             _commandQueue.Enqueue(new ActionCommand(() => Clipboard.SetText(name)));
             _commandQueue.Enqueue(new ActionCommand(() => _inputHook.PressKey(Keys.V, true)));
@@ -339,28 +321,85 @@ namespace POE2FlipTool.Modules
         }
 
 
-        public void ScreenShotAndUpdateGoogleSheet(string itemName, string cell, bool inverseScreenShotValue = false)
-        {
-            _commandQueue.Enqueue(new DelayCommand(DELAY_BEFORE_SCREENSHOT));
-            _commandQueue.Enqueue(new ActionCommand(() => _googleSheetUpdater.UpdateCell(cell, ScreenShotAndGetCurrentTradeRatio(inverseScreenShotValue, itemName))));
-        }
+        //public void ScreenShotAndUpdateGoogleSheet(string itemName, string cell, bool inverseScreenShotValue = false)
+        //{
+        //    _commandQueue.Enqueue(new DelayCommand(DELAY_BEFORE_SCREENSHOT));
+        //    _commandQueue.Enqueue(new ActionCommand(() => _googleSheetUpdater.UpdateCell(cell, ScreenShotAndGetCurrentTradeRatio(inverseScreenShotValue, itemName))));
+        //}
 
-        public void UpdateGoogleSheet(string cell, string value)
+        public void CommandUpdateGoogleSheet(string cell, string value)
         {
             _commandQueue.Enqueue(new ActionCommand(() => _googleSheetUpdater.UpdateCell(cell, value)));
         }
 
-        public string ScreenShotAndGetCurrentTradeRatio(bool reverse = false, string itemName = "Custom")
+        public void CommandGetTradeRatio(string buyItem = "Custom", string sellItem = "Custom")
         {
-            Bitmap bitmap = _ocrUtil.PrintScreenAt(_ocrTopPoint, _ocrBottomPoint);
+            CommandMoveMouse(_iHavePoint.X, _iHavePoint.Y);
+            CommandSendLeftClick(true);
+            CommandSendLeftClick(true);
+            _commandQueue.Enqueue(new DelayCommand(DELAY_BEFORE_SCREENSHOT));
+
+            MarketValue marketValue = new MarketValue()
+            {
+                ItemBuyName = buyItem,
+                ItemSellName = sellItem
+            };
+
+            CommandMoveMouse(_colorUtil.GetPixelPosition(TRADE_DETAIL));
+            _commandQueue.Enqueue(new DelayCommand(DELAY_AFTER_MOVEMOUSE));
+            _commandQueue.Enqueue(new ActionCommand(() => { marketValue.AvailableRate = ScreenShotAndGetCurrentTradeRatio(buyItem, sellItem); }));
+            CommandMoveMouse(_iHavePoint.X, _iHavePoint.Y);
+            CommandSendLeftClick(true);
+            CommandMoveMouse(_colorUtil.GetPixelPosition(TRADE_DETAIL));
+            _commandQueue.Enqueue(new DelayCommand(DELAY_AFTER_MOVEMOUSE));
+            _commandQueue.Enqueue(new ActionCommand(() => { marketValue.CompetingRate = ScreenShotAndGetCurrentTradeRatio(buyItem, sellItem); }));
+            _commandQueue.Enqueue(new ActionCommand(() => _marketValues.Add(marketValue)));
+            CommandMoveMouse(_iWantPoint.X, _iWantPoint.Y);
+            CommandSendLeftClick(true);
+        }
+
+        public List<(float, float)> ScreenShotAndGetCurrentTradeRatio(string buyItem = "Custom", string sellItem = "Custom")
+        {
+            Bitmap bitmap = _ocrUtil.PrintScreenAt(_ocrAvailableTopPoint, _ocrAvailableBottomPoint);
+            return ExtractMarketValue(buyItem, sellItem, bitmap);
+        }
+
+        private List<(float, float)> ExtractMarketValue(string buyItem, string sellItem, Bitmap bitmap)
+        {
+            List<(float, float)> rates = new List<(float, float)>();
+            bitmap = ProcessBitmap(bitmap);
+            List<Bitmap> bitmaps = _ocrUtil.SplitGrid(bitmap, 6, 1);
+            bitmap.Save(@"debug\debug_full.png");
+            int count = 0;
+            foreach (var bmp in bitmaps)
+            {
+                bmp.Save($@"debug\debug_split{count}.png");
+                count++;
+                var ratio = ExtractRatio(false, buyItem + " to " + sellItem, bmp);
+                rates.Add(ratio);
+            }
+
+            return rates;
+        }
+
+        private Bitmap ProcessBitmap(Bitmap bitmap)
+        {
             bitmap = _ocrUtil.ToGrayscale(bitmap);
             bitmap = _ocrUtil.UpScale(bitmap, 2);
             //bitmap = _ocrUtil.IncreaseContrast(bitmap, 2f);
             bitmap = _ocrUtil.Threshold(bitmap, 160);
             bitmap = _ocrUtil.Invert(bitmap);
+            return bitmap;
+        }
 
+        private (float, float) ExtractRatio(bool reverse, string itemName, Bitmap bitmap)
+        {
             string result = "";
-            List<Bitmap> chars = _ocrUtil.SplitCharacters(bitmap);
+            var splits = _ocrUtil.SplitGrid(bitmap, 1, 2);
+            splits[0].Save(@"debug\debug_extractratio0.png");
+            splits[1].Save(@"debug\debug_extractratio1.png");
+
+            List<Bitmap> chars = _ocrUtil.SplitCharacters(splits[0]);
 
             for (int i = 0; i < chars.Count; i++)
             {
@@ -397,8 +436,18 @@ namespace POE2FlipTool.Modules
                 throw new DivideByZeroException();
             }
 
-            string ratioString = "=" + (reverse ? (right + "/" + left) : (left + "/" + right));
-            return ratioString;
+            float ratio = reverse ? (right / left) : (left / right);
+
+            result = "";
+            List<Bitmap> chars2 = _ocrUtil.SplitCharacters(splits[1]);
+            for (int i = 0; i < chars2.Count; i++)
+            {
+                string charResult = _ocrUtil.RecognizeCharacter(chars2[i]);
+                result += charResult;
+            }
+            float stock = float.Parse(result, CultureInfo.InvariantCulture);
+
+            return (ratio, stock);
         }
 
         public Point GetCategoryCoord(string category)

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace POE2FlipTool.DataModel
+﻿namespace POE2FlipTool.DataModel
 {
     public class TradeItem
     {

@@ -354,5 +354,35 @@ namespace POE2FlipTool.Utilities
             double similarity = Similarity(img1, img2);
             return similarity >= threshold;
         }
+
+        public List<Bitmap> SplitGrid(Bitmap src, int rows, int cols)
+        {
+            var result = new List<Bitmap>();
+            int cellW = src.Width / cols;
+            int cellH = src.Height / rows;
+
+            for (int r = 0; r < rows; r++)
+            {
+                for (int c = 0; c < cols; c++)
+                {
+                    int x = c * cellW;
+                    int y = r * cellH;
+
+                    int w = (c == cols - 1) ? src.Width - x : cellW;
+                    int h = (r == rows - 1) ? src.Height - y : cellH;
+
+                    var bmp = new Bitmap(w, h);
+                    using (Graphics g = Graphics.FromImage(bmp))
+                    {
+                        g.DrawImage(src,
+                            new Rectangle(0, 0, w, h),
+                            new Rectangle(x, y, w, h),
+                            GraphicsUnit.Pixel);
+                    }
+                    result.Add(bmp);
+                }
+            }
+            return result;
+        }
     }
 }
