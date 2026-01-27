@@ -8,19 +8,26 @@ namespace POE2FlipTool.DataModel
 {
     public class TradeItem
     {
+        private static string[] weirdIndexList = new string[] { "Augmentation", "Transmutation", "Regal", "Exalted", "Chaos", "Jeweller's", "Essence" };
+
         public string category { get; set; }
-        public string name { get; set; } // Will also be what get typed into regex
-        public int itemSelectIndex { get; set; } = 1; // Which of the 3 item select slot to use - Default to middle one
-        public string column { get; set; } = "B"; // Which column this item belong to in google sheet
+        public string name { get; set; }
+        public int itemSelectIndex
+        {
+            get
+            {
+                if (!name.Contains("Greater") && !name.Contains("Perfect") && weirdIndexList.Contains(name))
+                {
+                    return 0;
+                }
+                return 1;
+            }
+        }
 
-        public Point categoryCoord { get; set; }
-
-        public TradeItem(string category, string name, int itemSelectIndex, string column)
+        public TradeItem(string category, string name)
         {
             this.category = category;
             this.name = name;
-            this.itemSelectIndex = itemSelectIndex;
-            this.column = column;
         }
     }
 }

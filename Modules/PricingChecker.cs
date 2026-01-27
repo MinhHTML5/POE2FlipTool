@@ -117,9 +117,9 @@ namespace POE2FlipTool.Modules
         public OCRUtil _ocrUtil;
         public GoogleSheetUpdater _googleSheetUpdater;
 
-        public TradeItem itemExaltedOrb = new TradeItem("Currency", "Exalted Orb", 0, "B");
-        public TradeItem itemChaosOrb = new TradeItem("Currency", "Chaos Orb", 0, "B");
-        public TradeItem itemDivineOrb = new TradeItem("Currency", "Divine Orb", 1, "B");
+        public TradeItem itemExaltedOrb = new TradeItem("Currency", "Exalted Orb");
+        public TradeItem itemChaosOrb = new TradeItem("Currency", "Chaos Orb");
+        public TradeItem itemDivineOrb = new TradeItem("Currency", "Divine Orb");
 
         private TradeItem _processingItem = null;
 
@@ -187,27 +187,6 @@ namespace POE2FlipTool.Modules
             _categories = ConfigReader.ReadCategoryConfig();
             _poeNinjaItems = ConfigReader.GetPoeNinjaList(ConfigReader.poeConfig) ?? new List<TradedItem>();
 
-            TradeCategory category = _categories.Find(c => c.name == itemExaltedOrb.category);
-            itemExaltedOrb.categoryCoord = _colorUtil.GetPixelPosition(category.x, category.y);
-            category = _categories.Find(c => c.name == itemChaosOrb.category);
-            itemChaosOrb.categoryCoord = _colorUtil.GetPixelPosition(category.x, category.y);
-            category = _categories.Find(c => c.name == itemDivineOrb.category);
-            itemDivineOrb.categoryCoord = _colorUtil.GetPixelPosition(category.x, category.y);
-
-            for (int i = 0; i < (int)_items.Count; i++)
-            {
-                TradeItem tradeItem = _items[i];
-                category = _categories.Find(c => c.name == tradeItem.category);
-                if (category != null)
-                {
-                    tradeItem.categoryCoord = _colorUtil.GetPixelPosition(category.x, category.y);
-                }
-                else
-                {
-                    throw new Exception("Category not found for item: " + tradeItem.name);
-                }
-            }
-
             // Here is where the check script begin
             // Select something on both side so the popular category show up
             MoveMouse(_iHavePoint.X, _iHavePoint.Y); SendLeftClick();
@@ -220,38 +199,43 @@ namespace POE2FlipTool.Modules
             {
                 ClickHave(itemDivineOrb);
                 ClickWant(itemExaltedOrb);
-                ScreenShotAndUpdateGoogleSheet(itemExaltedOrb, "B1");
+                ScreenShotAndUpdateGoogleSheet(itemExaltedOrb.name, _sheetConfig.ConvertRateExaltsSheetPosition);
             }
 
             // Update div -> chaos value
             if (_main.ShouldCheckChaos())
             {
                 ClickWant(itemChaosOrb);
-                ScreenShotAndUpdateGoogleSheet(itemChaosOrb, "B2");
+                ScreenShotAndUpdateGoogleSheet(itemChaosOrb.name, _sheetConfig.ConvertRateChaosSheetPosition);
             }
 
             // Go through each trade item and update trading value
-            for (int i = 0; i < _items.Count; i++)
-            {
-                TradeItem tradeItem = _items[i];
+            //for (int i = 0; i < _items.Count; i++)
 
+            int operatingLine = _sheetConfig.StatingRow;
+            foreach (var item in _poeNinjaItems)
+            {
+                var tradeItem = item.ToTradeItem();
                 // The code below is not inversed. For example, if we want to sell for divine
                 // We search for "I want tradeItem" and "I have divine" to get the lowest price
                 // someone else are willing to sell. That means we can sell around that price to.
-                ClickHave(itemDivineOrb);
+                UpdateGoogleSheet(_sheetConfig.Type + operatingLine, item.Poe2EconomyType.ToString());
+                UpdateGoogleSheet(_sheetConfig.Type + operatingLine, item.Name);
+
                 ClickWant(tradeItem);
-                ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + SELL_FOR_DIVINE_Y, true);
+                ClickHave(itemDivineOrb);
+                ScreenShotAndUpdateGoogleSheet(item.Name, _sheetConfig.BuyRateDivine + operatingLine, true);
 
                 if (_main.ShouldCheckExalt())
                 {
                     ClickHave(itemExaltedOrb);
-                    ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + SELL_FOR_EXALT_Y, true);
+                    ScreenShotAndUpdateGoogleSheet(item.Name, _sheetConfig.BuyRateExalt + operatingLine, true);
                 }
 
                 if (_main.ShouldCheckChaos())
                 {
                     ClickHave(itemChaosOrb);
-                    ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + SELL_FOR_CHAOS_Y, true);
+                    ScreenShotAndUpdateGoogleSheet(item.Name, _sheetConfig.BuyRateChaos + operatingLine, true);
                 }
 
 
@@ -260,17 +244,17 @@ namespace POE2FlipTool.Modules
                 if (_main.ShouldCheckExalt())
                 {
                     ClickWant(itemExaltedOrb);
-                    ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + BUY_WITH_EXALT_Y);
+                    ScreenShotAndUpdateGoogleSheet(item.Name, _sheetConfig.SellRateExalt + operatingLine);
                 }
 
                 if (_main.ShouldCheckChaos())
                 {
                     ClickWant(itemChaosOrb);
-                    ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + BUY_WITH_CHAOS_Y);
+                    ScreenShotAndUpdateGoogleSheet(item.Name, _sheetConfig.SellRateChaos + operatingLine);
                 }
 
                 ClickWant(itemDivineOrb);
-                ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + BUY_WITH_DIVINE_Y);
+                ScreenShotAndUpdateGoogleSheet(item.Name, _sheetConfig.SellRateDivine + operatingLine);
             }
         }
 
@@ -280,7 +264,7 @@ namespace POE2FlipTool.Modules
         {
             MoveMouse(_iWantPoint.X, _iWantPoint.Y);
             SendLeftClick();
-            MoveMouse(want.categoryCoord.X, want.categoryCoord.Y);
+            MoveMouse(GetCategoryCoord(want.category));
             SendLeftClick();
             MoveMouse(_regexPoint.X, _regexPoint.Y);
             SendLeftClick();
@@ -293,7 +277,8 @@ namespace POE2FlipTool.Modules
         {
             MoveMouse(_iHavePoint.X, _iHavePoint.Y);
             SendLeftClick();
-            MoveMouse(have.categoryCoord.X, have.categoryCoord.Y + _categoryHaveOffsetY);
+            var catCoord = GetCategoryCoord(have.category);
+            MoveMouse(catCoord.X, catCoord.Y + _categoryHaveOffsetY);
             SendLeftClick();
             MoveMouse(_regexPoint.X, _regexPoint.Y);
             SendLeftClick();
@@ -306,6 +291,16 @@ namespace POE2FlipTool.Modules
         public void Sleep(int milliseconds)
         {
             _commandQueue.Enqueue(new DelayCommand(milliseconds));
+        }
+
+        public void MoveMouse(Point p)
+        {
+            // Add some random offset to avoid detection
+            Random random = new Random();
+            var rndIntX = random.Next(-5, 5);
+            var rndIntY = random.Next(-2, 2);
+            _commandQueue.Enqueue(new ActionCommand(() => _inputHook.MoveMouse(p.X + rndIntX, p.Y + rndIntY)));
+            _commandQueue.Enqueue(new DelayCommand(DELAY_BETWEEN_ACTION));
         }
 
         public void MoveMouse(int x, int y)
@@ -332,10 +327,15 @@ namespace POE2FlipTool.Modules
         }
 
 
-        public void ScreenShotAndUpdateGoogleSheet(TradeItem item, string cell, bool inverseScreenShotValue = false)
+        public void ScreenShotAndUpdateGoogleSheet(string itemName, string cell, bool inverseScreenShotValue = false)
         {
             _commandQueue.Enqueue(new DelayCommand(DELAY_BEFORE_SCREENSHOT));
-            _commandQueue.Enqueue(new ActionCommand(() => _googleSheetUpdater.UpdateCell(cell, ScreenShotAndGetCurrentTradeRatio(inverseScreenShotValue, item.name))));
+            _commandQueue.Enqueue(new ActionCommand(() => _googleSheetUpdater.UpdateCell(cell, ScreenShotAndGetCurrentTradeRatio(inverseScreenShotValue, itemName))));
+        }
+
+        public void UpdateGoogleSheet(string cell, string value)
+        {
+            _commandQueue.Enqueue(new ActionCommand(() => _googleSheetUpdater.UpdateCell(cell, value)));
         }
 
         public string ScreenShotAndGetCurrentTradeRatio(bool reverse = false, string itemName = "Custom")
@@ -387,6 +387,16 @@ namespace POE2FlipTool.Modules
 
             string ratioString = "=" + (reverse ? (right + "/" + left) : (left + "/" + right));
             return ratioString;
+        }
+
+        public Point GetCategoryCoord(string category)
+        {
+            var cat = _categories.Find(c => c.name == category);
+            if (cat == null)
+            {
+                throw new Exception("Category not found : " + category);
+            }
+            return _colorUtil.GetPixelPosition(cat.x, cat.y);
         }
     }
 }

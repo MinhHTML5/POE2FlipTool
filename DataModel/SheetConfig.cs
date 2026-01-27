@@ -14,8 +14,8 @@ namespace POE2FlipTool.DataModel
         public string BuyRateExalt { get; set; } = "G";
         public string SellRateExalt { get; set; } = "H";
         
-        public string ConvertRateChaos { get; set; } = "L3";
-        public string ConvertRateExalts { get; set; } = "L4";
+        public string ConvertRateChaosSheetPosition { get; set; } = "L3";
+        public string ConvertRateExaltsSheetPosition { get; set; } = "L4";
 
         public int StatingRow { get; set; } = 3;
 
