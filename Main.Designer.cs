@@ -48,9 +48,9 @@
             lblTutorial1.AutoSize = true;
             lblTutorial1.Location = new Point(13, 10);
             lblTutorial1.Name = "lblTutorial1";
-            lblTutorial1.Size = new Size(341, 15);
+            lblTutorial1.Size = new Size(314, 15);
             lblTutorial1.TabIndex = 3;
-            lblTutorial1.Text = "- Open currency exchange alone. Must close all other windows.";
+            lblTutorial1.Text = "- Open currency exchange and your inventory (important)";
             // 
             // lblTutorial2
             // 

@@ -70,17 +70,17 @@ namespace POE2FlipTool.Modules
         public const int DELAY_BETWEEN_ACTION = 250;
         public const int DELAY_BEFORE_SCREENSHOT = 500;
 
-        public PointF OCR_TOP = new PointF(0.4692f, 0.17222223f);
-        public PointF OCR_BOTTOM = new PointF(0.5338f, 0.192f);
-        public PointF I_WANT = new PointF(0.36f, 0.22f);
-        public PointF I_HAVE = new PointF(0.62f, 0.22f);
-        public PointF REGEX = new PointF(0.5f, 0.87f);
+        public PointF OCR_TOP = new PointF(0.30645312f, 0.17222223f);
+        public PointF OCR_BOTTOM = new PointF(0.34664064f, 0.192f);
+        public PointF I_WANT = new PointF(0.19f, 0.22f);
+        public PointF I_HAVE = new PointF(0.44f, 0.22f);
+        public PointF REGEX = new PointF(0.36f, 0.87f);
 
         public PointF[] ITEM_SELECT = new PointF[]
         {
-            new PointF(0.42f, 0.184f),
-            new PointF(0.56f, 0.184f),
-            new PointF(0.66f, 0.184f)
+            new PointF(0.273f, 0.184f),
+            new PointF(0.375f, 0.184f),
+            new PointF(0.473f, 0.184f)
         };
 
         public float CATEGORY_HAVE_OFFSET_Y = 0.037f;
@@ -344,7 +344,7 @@ namespace POE2FlipTool.Modules
             bitmap = _ocrUtil.UpScale(bitmap, 2);
             bitmap = _ocrUtil.ToGrayscale(bitmap);
             bitmap = _ocrUtil.IncreaseContrast(bitmap, 2f);
-            bitmap = _ocrUtil.Threshold(bitmap, 120);
+            bitmap = _ocrUtil.Threshold(bitmap, 100);
             bitmap = _ocrUtil.Invert(bitmap);
 
             string result = "";
