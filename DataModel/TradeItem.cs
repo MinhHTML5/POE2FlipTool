@@ -16,9 +16,12 @@ namespace POE2FlipTool.DataModel
         {
             get
             {
-                if (!name.Contains("Greater") && !name.Contains("Perfect") && weirdIndexList.Contains(name))
+                foreach (string weirdItem in weirdIndexList)
                 {
-                    return 0;
+                    if (name.Contains(weirdItem) && !name.Contains("Greater") && !name.Contains("Perfect"))
+                    {
+                        return 0;
+                    }
                 }
                 return 1;
             }

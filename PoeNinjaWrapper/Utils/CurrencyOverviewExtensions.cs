@@ -84,17 +84,22 @@ public static class CurrencyOverviewExtensions
             }
         }
     }
-
-
     private static TradedItem ToTradedItem(
         (Poe2EconomyType Type, CurrencyLine Line, CurrencyItem Item) x)
     {
+        if (!Enum.TryParse<Poe2EconomyType>(
+                x.Item.Category,
+                ignoreCase: true,
+                out var itemType))
+        {
+            itemType = Poe2EconomyType.None;
+        }
+
         return new TradedItem
         {
             Name = x.Item.Name,
             VolumePrimaryValue = x.Line.VolumePrimaryValue,
-            Poe2EconomyType = x.Type
+            Poe2EconomyType = itemType
         };
     }
-
 }

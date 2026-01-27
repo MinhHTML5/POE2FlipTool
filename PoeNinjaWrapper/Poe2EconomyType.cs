@@ -18,6 +18,7 @@ public enum Poe2EconomyType
     Expedition = 1 << 10,
     Delirium = 1 << 11,
     Breach = 1 << 12,
+    Incursion = 1 << 13,
 
     All = ~0
 }

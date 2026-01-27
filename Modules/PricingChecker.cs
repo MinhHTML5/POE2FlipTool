@@ -83,6 +83,13 @@ namespace POE2FlipTool.Modules
             new PointF(0.473f, 0.184f)
         };
 
+        public string[] CORE_CURRENCIES = new string[]
+        {
+            "Exalted Orb",
+            "Chaos Orb",
+            "Divine Orb"
+        };
+
         public float CATEGORY_HAVE_OFFSET_Y = 0.037f;
 
         public const int SELL_FOR_DIVINE_Y = 11;
@@ -158,20 +165,21 @@ namespace POE2FlipTool.Modules
 
         public void MainLoop(int deltaTime)
         {
+            if (_commandQueue.Count == 0)
+            {
+                _main.Stop();
+                return;
+            }
+
+            ICommand cmd = _commandQueue.Peek();
             try
             {
-                if (_commandQueue.Count == 0)
-                {
-                    _main.Stop();
-                    return;
-                }
-
-                ICommand cmd = _commandQueue.Peek();
                 if (cmd.Execute())
                     _commandQueue.Dequeue();
             }
             catch (Exception ex)
             {
+                _commandQueue.Dequeue();
             }
         }
 
@@ -215,12 +223,15 @@ namespace POE2FlipTool.Modules
             int operatingLine = _sheetConfig.StatingRow;
             foreach (var item in _poeNinjaItems)
             {
+                // Skip core currencies
+                if (CORE_CURRENCIES.Contains(item.Name)) continue;
+
                 var tradeItem = item.ToTradeItem();
                 // The code below is not inversed. For example, if we want to sell for divine
                 // We search for "I want tradeItem" and "I have divine" to get the lowest price
                 // someone else are willing to sell. That means we can sell around that price to.
                 UpdateGoogleSheet(_sheetConfig.Type + operatingLine, item.Poe2EconomyType.ToString());
-                UpdateGoogleSheet(_sheetConfig.Type + operatingLine, item.Name);
+                UpdateGoogleSheet(_sheetConfig.Name + operatingLine, item.Name);
 
                 ClickWant(tradeItem);
                 ClickHave(itemDivineOrb);
@@ -255,6 +266,7 @@ namespace POE2FlipTool.Modules
 
                 ClickWant(itemDivineOrb);
                 ScreenShotAndUpdateGoogleSheet(item.Name, _sheetConfig.SellRateDivine + operatingLine);
+                operatingLine++;
             }
         }
 
@@ -341,10 +353,10 @@ namespace POE2FlipTool.Modules
         public string ScreenShotAndGetCurrentTradeRatio(bool reverse = false, string itemName = "Custom")
         {
             Bitmap bitmap = _ocrUtil.PrintScreenAt(_ocrTopPoint, _ocrBottomPoint);
-            bitmap = _ocrUtil.UpScale(bitmap, 2);
             bitmap = _ocrUtil.ToGrayscale(bitmap);
-            bitmap = _ocrUtil.IncreaseContrast(bitmap, 2f);
-            bitmap = _ocrUtil.Threshold(bitmap, 100);
+            bitmap = _ocrUtil.UpScale(bitmap, 2);
+            //bitmap = _ocrUtil.IncreaseContrast(bitmap, 2f);
+            bitmap = _ocrUtil.Threshold(bitmap, 160);
             bitmap = _ocrUtil.Invert(bitmap);
 
             string result = "";
