@@ -24,6 +24,7 @@ namespace POE2FlipTool.Utilities
         Bitmap sample9 = new Bitmap("data/ocrSample/9.png");
         Bitmap sampleDot = new Bitmap("data/ocrSample/dot.png");
         Bitmap sampleColon = new Bitmap("data/ocrSample/colon.png");
+        Bitmap sampleLessThan = new Bitmap("data/ocrSample/lessthan.png");
 
         List<OCRSample> ocrSamples = new List<OCRSample>();
 
@@ -42,6 +43,7 @@ namespace POE2FlipTool.Utilities
             ocrSamples.Add(new OCRSample { Bitmap = Normalize(sample9), Character = "9" });
             ocrSamples.Add(new OCRSample { Bitmap = Normalize(sampleDot), Character = "." });
             ocrSamples.Add(new OCRSample { Bitmap = Normalize(sampleColon), Character = ":" });
+            ocrSamples.Add(new OCRSample { Bitmap = Normalize(sampleLessThan), Character = "<" });
         }
 
         public string RecognizeCharacter(Bitmap bitmap)

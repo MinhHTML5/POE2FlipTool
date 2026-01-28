@@ -2,11 +2,14 @@
 using POE2FlipTool.DataModel;
 using POE2FlipTool.Utilities;
 using System.Globalization;
+using System.Text.Json;
 using Windows.Foundation.Diagnostics;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
 
 
 namespace POE2FlipTool.Modules
 {
+    #region Command
     interface ICommand
     {
         bool Execute();
@@ -50,21 +53,7 @@ namespace POE2FlipTool.Modules
             return true;
         }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    #endregion
 
     public class PricingChecker
     {
@@ -204,23 +193,27 @@ namespace POE2FlipTool.Modules
             ClickHave(itemDivineOrb);
             ClickWant(itemExaltedOrb);
             CommandGetTradeRatio(itemExaltedOrb.name, itemDivineOrb.name);
-            //Update div -> chaos value
+            // Update div -> chaos value
             ClickWant(itemChaosOrb);
             CommandGetTradeRatio(itemChaosOrb.name, itemDivineOrb.name);
 
-            // Go through each trade item and update trading value
-            //for (int i = 0; i < _items.Count; i++)
-
-            int operatingLine = _sheetConfig.StatingRow;
             foreach (var item in _poeNinjaItems)
             {
                 // Skip core currencies
                 if (CORE_CURRENCIES.Contains(item.Name)) continue;
-
                 PriceCheck(item);
-
-                operatingLine++;
             }
+
+            var options = new JsonSerializerOptions
+            {
+                WriteIndented = true
+            };
+
+            _commandQueue.Enqueue(new ActionCommand(() =>
+            {
+                string json = JsonSerializer.Serialize(_marketValues, options);
+                File.WriteAllText("market.json", json);
+            }));
         }
 
         private void PriceCheck(TradedItem item)
@@ -352,21 +345,21 @@ namespace POE2FlipTool.Modules
             CommandSendLeftClick(true);
             CommandMoveMouse(_colorUtil.GetPixelPosition(TRADE_DETAIL));
             _commandQueue.Enqueue(new DelayCommand(DELAY_AFTER_MOVEMOUSE));
-            _commandQueue.Enqueue(new ActionCommand(() => { marketValue.CompetingRate = ScreenShotAndGetCurrentTradeRatio(buyItem, sellItem); }));
+            _commandQueue.Enqueue(new ActionCommand(() => { marketValue.CompetingRate = ScreenShotAndGetCurrentTradeRatio(buyItem, sellItem, true); }));
             _commandQueue.Enqueue(new ActionCommand(() => _marketValues.Add(marketValue)));
             CommandMoveMouse(_iWantPoint.X, _iWantPoint.Y);
             CommandSendLeftClick(true);
         }
 
-        public List<(float, float)> ScreenShotAndGetCurrentTradeRatio(string buyItem = "Custom", string sellItem = "Custom")
+        public List<Rate> ScreenShotAndGetCurrentTradeRatio(string buyItem = "Custom", string sellItem = "Custom", bool reverse = false)
         {
             Bitmap bitmap = _ocrUtil.PrintScreenAt(_ocrAvailableTopPoint, _ocrAvailableBottomPoint);
-            return ExtractMarketValue(buyItem, sellItem, bitmap);
+            return ExtractMarketValue(buyItem, sellItem, bitmap, reverse);
         }
 
-        private List<(float, float)> ExtractMarketValue(string buyItem, string sellItem, Bitmap bitmap)
+        private List<Rate> ExtractMarketValue(string buyItem, string sellItem, Bitmap bitmap, bool reverse = false)
         {
-            List<(float, float)> rates = new List<(float, float)>();
+            List<Rate> rates = new List<Rate>();
             bitmap = ProcessBitmap(bitmap);
             List<Bitmap> bitmaps = _ocrUtil.SplitGrid(bitmap, 6, 1);
             bitmap.Save(@"debug\debug_full.png");
@@ -375,7 +368,7 @@ namespace POE2FlipTool.Modules
             {
                 bmp.Save($@"debug\debug_split{count}.png");
                 count++;
-                var ratio = ExtractRatio(false, buyItem + " to " + sellItem, bmp);
+                var ratio = ExtractRatio(buyItem + " to " + sellItem, bmp, reverse);
                 rates.Add(ratio);
             }
 
@@ -392,7 +385,7 @@ namespace POE2FlipTool.Modules
             return bitmap;
         }
 
-        private (float, float) ExtractRatio(bool reverse, string itemName, Bitmap bitmap)
+        private Rate ExtractRatio(string itemName, Bitmap bitmap, bool reverse = false)
         {
             string result = "";
             var splits = _ocrUtil.SplitGrid(bitmap, 1, 2);
@@ -412,6 +405,8 @@ namespace POE2FlipTool.Modules
             _main.AddOCRDebugControl(ocrDebug);
 
             int splitIndex = 0;
+            if (result.Contains('<'))
+                result = result.Remove(0, 1);
             if (result.Contains(':'))
             {
                 splitIndex = result.IndexOf(':');
@@ -447,7 +442,7 @@ namespace POE2FlipTool.Modules
             }
             float stock = float.Parse(result, CultureInfo.InvariantCulture);
 
-            return (ratio, stock);
+            return new Rate(ratio, stock);
         }
 
         public Point GetCategoryCoord(string category)

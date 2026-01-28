@@ -1,8 +1,4 @@
-﻿using System;
-using System.Drawing;
-using System.Runtime.InteropServices;
-using System.Windows.Forms;
-using System.Threading;
+﻿using System.Runtime.InteropServices;
 
 namespace POE2FlipTool.Utilities
 {
