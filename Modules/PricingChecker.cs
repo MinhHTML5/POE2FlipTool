@@ -351,15 +351,15 @@ namespace POE2FlipTool.Modules
             CommandSendLeftClick(true);
         }
 
-        public List<Rate> ScreenShotAndGetCurrentTradeRatio(string buyItem = "Custom", string sellItem = "Custom", bool reverse = false)
+        public List<MarketRecord> ScreenShotAndGetCurrentTradeRatio(string buyItem = "Custom", string sellItem = "Custom", bool reverse = false)
         {
             Bitmap bitmap = _ocrUtil.PrintScreenAt(_ocrAvailableTopPoint, _ocrAvailableBottomPoint);
             return ExtractMarketValue(buyItem, sellItem, bitmap, reverse);
         }
 
-        private List<Rate> ExtractMarketValue(string buyItem, string sellItem, Bitmap bitmap, bool reverse = false)
+        private List<MarketRecord> ExtractMarketValue(string buyItem, string sellItem, Bitmap bitmap, bool reverse = false)
         {
-            List<Rate> rates = new List<Rate>();
+            List<MarketRecord> rates = new List<MarketRecord>();
             bitmap = ProcessBitmap(bitmap);
             List<Bitmap> bitmaps = _ocrUtil.SplitGrid(bitmap, 6, 1);
             bitmap.Save(@"debug\debug_full.png");
@@ -385,7 +385,7 @@ namespace POE2FlipTool.Modules
             return bitmap;
         }
 
-        private Rate ExtractRatio(string itemName, Bitmap bitmap, bool reverse = false)
+        private MarketRecord ExtractRatio(string itemName, Bitmap bitmap, bool reverse = false)
         {
             string result = "";
             var splits = _ocrUtil.SplitGrid(bitmap, 1, 2);
@@ -442,7 +442,7 @@ namespace POE2FlipTool.Modules
             }
             float stock = float.Parse(result, CultureInfo.InvariantCulture);
 
-            return new Rate(ratio, stock);
+            return new MarketRecord(ratio, stock);
         }
 
         public Point GetCategoryCoord(string category)

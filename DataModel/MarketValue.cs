@@ -1,13 +1,13 @@
 ﻿namespace POE2FlipTool.DataModel
 {
-    public record Rate(float Price, float Volume);
+    public record MarketRecord(float Rate, float Volume);
 
     public class MarketValue
     {
         public string ItemBuyName { get; set; } = "";
         public string ItemSellName { get; set; } = "";
-        public List<Rate> AvailableRate { get; set; } = new();
-        public List<Rate> CompetingRate { get; set; } = new();
+        public List<MarketRecord> AvailableRate { get; set; } = new();
+        public List<MarketRecord> CompetingRate { get; set; } = new();
     }
 
 }
