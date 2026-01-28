@@ -144,16 +144,6 @@ namespace POE2FlipTool
             flpDebug.ScrollControlIntoView(ocrDebug);
         }
 
-        public bool ShouldCheckChaos()
-        {
-            return chkCheckChaos.Checked;
-        }
-
-        public bool ShouldCheckExalt()
-        {
-            return chkCheckExalt.Checked;
-        }
-
         private void MainLoop()
         {
             // This variable turn off all submodule from doing logic, but still let them to count cooldown

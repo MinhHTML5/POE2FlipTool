@@ -37,8 +37,6 @@
             lblTutorial6 = new Label();
             lblPOEChoosed = new Label();
             panel1 = new Panel();
-            chkCheckChaos = new CheckBox();
-            chkCheckExalt = new CheckBox();
             btnClearDebug = new Button();
             panel1.SuspendLayout();
             SuspendLayout();
@@ -84,9 +82,9 @@
             flpDebug.AutoScroll = true;
             flpDebug.BorderStyle = BorderStyle.Fixed3D;
             flpDebug.FlowDirection = FlowDirection.TopDown;
-            flpDebug.Location = new Point(550, 9);
+            flpDebug.Location = new Point(383, 9);
             flpDebug.Name = "flpDebug";
-            flpDebug.Size = new Size(305, 619);
+            flpDebug.Size = new Size(472, 619);
             flpDebug.TabIndex = 7;
             flpDebug.WrapContents = false;
             // 
@@ -132,30 +130,6 @@
             panel1.Size = new Size(365, 166);
             panel1.TabIndex = 11;
             // 
-            // chkCheckChaos
-            // 
-            chkCheckChaos.AutoSize = true;
-            chkCheckChaos.Checked = true;
-            chkCheckChaos.CheckState = CheckState.Checked;
-            chkCheckChaos.Location = new Point(383, 62);
-            chkCheckChaos.Name = "chkCheckChaos";
-            chkCheckChaos.Size = new Size(139, 19);
-            chkCheckChaos.TabIndex = 12;
-            chkCheckChaos.Text = "Check Chaos <-> Div";
-            chkCheckChaos.UseVisualStyleBackColor = true;
-            // 
-            // chkCheckExalt
-            // 
-            chkCheckExalt.AutoSize = true;
-            chkCheckExalt.Checked = true;
-            chkCheckExalt.CheckState = CheckState.Checked;
-            chkCheckExalt.Location = new Point(383, 87);
-            chkCheckExalt.Name = "chkCheckExalt";
-            chkCheckExalt.Size = new Size(131, 19);
-            chkCheckExalt.TabIndex = 13;
-            chkCheckExalt.Text = "Check Exalt <-> Div";
-            chkCheckExalt.UseVisualStyleBackColor = true;
-            // 
             // btnClearDebug
             // 
             btnClearDebug.ForeColor = Color.Black;
@@ -173,8 +147,6 @@
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(865, 685);
             Controls.Add(btnClearDebug);
-            Controls.Add(chkCheckExalt);
-            Controls.Add(chkCheckChaos);
             Controls.Add(panel1);
             Controls.Add(lblPOEChoosed);
             Controls.Add(flpDebug);
@@ -197,8 +169,6 @@
         private Label lblTutorial6;
         private Label lblPOEChoosed;
         private Panel panel1;
-        private CheckBox chkCheckChaos;
-        private CheckBox chkCheckExalt;
         private Button btnClearDebug;
     }
 }

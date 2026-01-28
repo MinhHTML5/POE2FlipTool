@@ -61,8 +61,8 @@ namespace POE2FlipTool.Modules
         public const int DELAY_BEFORE_SCREENSHOT = 500;
         public const int DELAY_AFTER_MOVEMOUSE = 1000;
 
-        public PointF OCR_AVAIL_TOP = new PointF(0.283f, 0.22f);
-        public PointF OCR_AVAIL_BOTTOM = new PointF(0.365f, 0.345f);
+        public PointF OCR_AVAIL_TOP = new PointF(0.275f, 0.22f);
+        public PointF OCR_AVAIL_BOTTOM = new PointF(0.373f, 0.345f);
         public PointF I_WANT = new PointF(0.19f, 0.22f);
         public PointF I_HAVE = new PointF(0.44f, 0.22f);
         public PointF REGEX = new PointF(0.36f, 0.87f);

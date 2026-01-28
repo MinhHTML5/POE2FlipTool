@@ -41,7 +41,7 @@
             pctOCRDebug.BorderStyle = BorderStyle.FixedSingle;
             pctOCRDebug.Location = new Point(8, 27);
             pctOCRDebug.Name = "pctOCRDebug";
-            pctOCRDebug.Size = new Size(263, 52);
+            pctOCRDebug.Size = new Size(434, 52);
             pctOCRDebug.SizeMode = PictureBoxSizeMode.CenterImage;
             pctOCRDebug.TabIndex = 0;
             pctOCRDebug.TabStop = false;
@@ -60,7 +60,7 @@
             // btnWrong
             // 
             btnWrong.BackColor = Color.FromArgb(255, 192, 192);
-            btnWrong.Location = new Point(197, 85);
+            btnWrong.Location = new Point(368, 85);
             btnWrong.Name = "btnWrong";
             btnWrong.Size = new Size(74, 27);
             btnWrong.TabIndex = 3;
@@ -71,7 +71,7 @@
             // lblOCRDebug
             // 
             lblOCRDebug.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            lblOCRDebug.Location = new Point(168, 1);
+            lblOCRDebug.Location = new Point(339, 1);
             lblOCRDebug.Name = "lblOCRDebug";
             lblOCRDebug.Size = new Size(103, 23);
             lblOCRDebug.TabIndex = 1;
@@ -80,10 +80,10 @@
             // 
             // lblItemName
             // 
-            lblItemName.Font = new Font("Segoe UI", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblItemName.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
             lblItemName.Location = new Point(8, 1);
             lblItemName.Name = "lblItemName";
-            lblItemName.Size = new Size(154, 23);
+            lblItemName.Size = new Size(325, 23);
             lblItemName.TabIndex = 4;
             lblItemName.Text = "Vaal cultivation orb";
             lblItemName.TextAlign = ContentAlignment.MiddleLeft;
@@ -99,7 +99,7 @@
             Controls.Add(lblOCRDebug);
             Controls.Add(pctOCRDebug);
             Name = "OCRDebug";
-            Size = new Size(278, 117);
+            Size = new Size(445, 117);
             ((System.ComponentModel.ISupportInitialize)pctOCRDebug).EndInit();
             ResumeLayout(false);
         }
