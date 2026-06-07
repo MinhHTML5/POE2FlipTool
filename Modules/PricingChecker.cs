@@ -119,7 +119,7 @@ namespace POE2FlipTool.Modules
 
         public TradeItem itemExaltedOrb = new TradeItem("Currency", "Exalted Orb", 0, "B");
         public TradeItem itemChaosOrb = new TradeItem("Currency", "Chaos Orb", 0, "B");
-        public TradeItem itemDivineOrb = new TradeItem("Currency", "Divine Orb", 1, "B");
+        public TradeItem itemDivineOrb = new TradeItem("Currency", "Divine Orb", 0, "B");
 
         private TradeItem _processingItem = null;
 

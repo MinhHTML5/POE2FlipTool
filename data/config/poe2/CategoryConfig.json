@@ -20,52 +20,52 @@
     "y": 0.336
   },
   {
-    "name": "Ritual",
+    "name": "Abyss",
     "x": 0.3,
     "y": 0.377
   },
   {
-    "name": "Expedition",
+    "name": "Atziri",
     "x": 0.3,
     "y": 0.416
   },
   {
-    "name": "Abyss",
+    "name": "Fragments",
     "x": 0.3,
     "y": 0.451
   },
   {
-    "name": "Incursion",
+    "name": "Runes",
     "x": 0.3,
     "y": 0.491
   },
   {
-    "name": "Fragments",
+    "name": "Ritual",
     "x": 0.3,
     "y": 0.524
   },
   {
-    "name": "Runes",
+    "name": "Soul Cores",
     "x": 0.3,
     "y": 0.562
   },
   {
-    "name": "SoulCores",
+    "name": "Idols",
     "x": 0.3,
     "y": 0.6
   },
   {
-    "name": "Idols",
+    "name": "UncutGems",
     "x": 0.3,
     "y": 0.637
   },
   {
-    "name": "UncutGems",
+    "name": "Gems",
     "x": 0.3,
     "y": 0.676
   },
   {
-    "name": "Gems",
+    "name": "Expedition",
     "x": 0.3,
     "y": 0.709
   }
