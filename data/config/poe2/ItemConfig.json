@@ -24,6 +24,18 @@
     "column": "E"
   },
   {
+    "category": "Ritual",
+    "name": "Omen of Catalysing",
+    "itemSelectIndex": 0,
+    "column": "F"
+  },
+  {
+    "category": "Abyss",
+    "name": "Omen of Putre",
+    "itemSelectIndex": 0,
+    "column": "G"
+  },
+  {
     "category": "Breach",
     "name": "Reaver Catalyst",
     "itemSelectIndex": 0,
@@ -46,6 +58,48 @@
     "name": "Xoph's Catalyst",
     "itemSelectIndex": 0,
     "column": "K"
+  },
+  {
+    "category": "Abyss",
+    "name": "Preserved Collar",
+    "itemSelectIndex": 0,
+    "column": "L"
+  },
+  {
+    "category": "Essences",
+    "name": "Essence of Hysteria",
+    "itemSelectIndex": 0,
+    "column": "M"
+  },
+  {
+    "category": "Ritual",
+    "name": "Omen of Whittling",
+    "itemSelectIndex": 0,
+    "column": "N"
+  },
+  {
+    "category": "Delirium",
+    "name": "Simulacrum",
+    "itemSelectIndex": 1,
+    "column": "O"
+  },
+  {
+    "category": "Breach",
+    "name": "Breachstone",
+    "itemSelectIndex": 1,
+    "column": "P"
+  },
+  {
+    "category": "Breach",
+    "name": "Breach splinter",
+    "itemSelectIndex": 1,
+    "column": "Q"
+  },
+  {
+    "category": "Breach",
+    "name": "Breach splinter",
+    "itemSelectIndex": 1,
+    "column": "Q"
   }
 
 ]

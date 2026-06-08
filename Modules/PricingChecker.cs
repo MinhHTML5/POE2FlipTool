@@ -69,7 +69,8 @@ namespace POE2FlipTool.Modules
 
     public class PricingChecker
     {
-        public const int DELAY_BETWEEN_ACTION = 250;
+        public const int DELAY_BETWEEN_ACTION_SHORT = 50;
+        public const int DELAY_BETWEEN_ACTION_LONG = 200;
         public const int DELAY_BEFORE_SCREENSHOT = 500;
 
         public PointF OCR_TOP = new PointF(0.4692f, 0.17222223f);
@@ -310,20 +311,20 @@ namespace POE2FlipTool.Modules
         public void MoveMouse(int x, int y)
         {
             _commandQueue.Enqueue(new ActionCommand(() => _inputHook.MoveMouse(x, y)));
-            _commandQueue.Enqueue(new DelayCommand(DELAY_BETWEEN_ACTION));
+            _commandQueue.Enqueue(new DelayCommand(DELAY_BETWEEN_ACTION_SHORT));
         }
 
         public void SendLeftClick()
         {
             _commandQueue.Enqueue(new ActionCommand(() => _inputHook.SendLeftClick()));
-            _commandQueue.Enqueue(new DelayCommand(DELAY_BETWEEN_ACTION));
+            _commandQueue.Enqueue(new DelayCommand(DELAY_BETWEEN_ACTION_LONG));
         }
 
         public void TypeItemName(string name)
         {
             _commandQueue.Enqueue(new ActionCommand(() => Clipboard.SetText(name)));
             _commandQueue.Enqueue(new ActionCommand(() => _inputHook.PressKey(Keys.V, true)));
-            _commandQueue.Enqueue(new DelayCommand(DELAY_BETWEEN_ACTION));
+            _commandQueue.Enqueue(new DelayCommand(DELAY_BETWEEN_ACTION_SHORT));
         }
 
         
