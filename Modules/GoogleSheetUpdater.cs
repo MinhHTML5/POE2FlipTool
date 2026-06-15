@@ -33,7 +33,7 @@ namespace POE2FlipTool.Modules
             });
         }
 
-        public void UpdateCell (string cell, object value)
+        public void UpdateCell(string cell, object value)
         {
             // Define request parameters.
             var range = $"{_sheetName}!{cell}";
@@ -44,6 +44,41 @@ namespace POE2FlipTool.Modules
             var updateRequest = _service.Spreadsheets.Values.Update(valueRange, _spreadsheetId, range);
             updateRequest.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
             updateRequest.ExecuteAsync();
+        }
+
+        public string GetValueFromCell(string cell)
+        {
+            var range = $"{_sheetName}!{cell}";
+            var request = _service.Spreadsheets.Values.Get(_spreadsheetId, range);
+            var response = request.Execute();
+            var values = response.Values;
+            if (values != null && values.Count > 0 && values[0].Count > 0)
+            {
+                return values[0][0].ToString();
+            }
+            return null;
+        }
+
+        public List<(int, string)> GetValueFromColumn(string column)
+        {
+            var range = $"{_sheetName}!{column}:{column}";
+            var request = _service.Spreadsheets.Values.Get(_spreadsheetId, range);
+            var response = request.Execute();
+
+            var result = new List<(int Row, string Value)>();
+
+            if (response.Values == null)
+                return result;
+
+            for (int i = 0; i < response.Values.Count; i++)
+            {
+                var row = response.Values[i];
+                string value = row.Count > 0 ? row[0]?.ToString() ?? "" : "";
+                result.Add((i + 1, value));
+            }
+
+            return result;
+
         }
     }
 }

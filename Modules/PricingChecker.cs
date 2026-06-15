@@ -69,8 +69,8 @@ namespace POE2FlipTool.Modules
 
     public class PricingChecker
     {
-        public const int DELAY_BETWEEN_ACTION_SHORT = 50;
-        public const int DELAY_BETWEEN_ACTION_LONG = 200;
+        public const int DELAY_BETWEEN_ACTION_SHORT = 25;
+        public const int DELAY_BETWEEN_ACTION_LONG = 75;
         public const int DELAY_BEFORE_SCREENSHOT = 500;
 
         public PointF OCR_TOP = new PointF(0.4692f, 0.17222223f);
@@ -88,17 +88,15 @@ namespace POE2FlipTool.Modules
 
         public float CATEGORY_HAVE_OFFSET_Y = 0.037f;
 
-        public const int SELL_FOR_DIVINE_Y = 11;
-        public const int BUY_WITH_EXALT_Y = 13;
-        public const int BUY_WITH_CHAOS_Y = 16;
-        public const int BUY_WITH_DIVINE_Y = 30;
-        public const int SELL_FOR_EXALT_Y = 32;
-        public const int SELL_FOR_CHAOS_Y = 35;
+        public const string SELL_FOR_DIVINE_Y = "D";
+        public const string BUY_WITH_EXALT_Y = "E";
+        public const string BUY_WITH_CHAOS_Y = "G";
+        public const string BUY_WITH_DIVINE_Y = "J";
+        public const string SELL_FOR_EXALT_Y = "K";
+        public const string SELL_FOR_CHAOS_Y = "M";
+        public const float CATEGORY_ALL_X = 0.3f;
+        public const float CATEGORY_ALL_Y = 0.15f;
 
-
-
-        private List<TradeItem> _items = new List<TradeItem>();
-        private List<TradeCategory> _categories = new List<TradeCategory>();
 
         private Point _ocrTopPoint = new Point();
         private Point _ocrBottomPoint = new Point();
@@ -118,9 +116,9 @@ namespace POE2FlipTool.Modules
         public OCRUtil _ocrUtil;
         public GoogleSheetUpdater _googleSheetUpdater;
 
-        public TradeItem itemExaltedOrb = new TradeItem("Currency", "Exalted Orb", 0, "B");
-        public TradeItem itemChaosOrb = new TradeItem("Currency", "Chaos Orb", 0, "B");
-        public TradeItem itemDivineOrb = new TradeItem("Currency", "Divine Orb", 0, "B");
+        public TradeItem itemExaltedOrb = new TradeItem("Exalted Orb", 0);
+        public TradeItem itemChaosOrb = new TradeItem("Chaos Orb", 0);
+        public TradeItem itemDivineOrb = new TradeItem("Divine Orb", 0);
 
         private TradeItem _processingItem = null;
 
@@ -155,6 +153,11 @@ namespace POE2FlipTool.Modules
             _categoryHaveOffsetY = _colorUtil.GetPixelPosition(0, CATEGORY_HAVE_OFFSET_Y).Y;
         }
 
+        public List<(int, string)> GetItemList()
+        {
+            return _googleSheetUpdater.GetValueFromColumn("A");
+        }
+
 
 
         public void MainLoop(int deltaTime)
@@ -184,29 +187,8 @@ namespace POE2FlipTool.Modules
         public void Start()
         {
             _started = true;
-            _items = ConfigReader.ReadItemConfig();
-            _categories = ConfigReader.ReadCategoryConfig();
 
-            TradeCategory category = _categories.Find(c => c.name == itemExaltedOrb.category);
-            itemExaltedOrb.categoryCoord = _colorUtil.GetPixelPosition(category.x, category.y);
-            category = _categories.Find(c => c.name == itemChaosOrb.category);
-            itemChaosOrb.categoryCoord = _colorUtil.GetPixelPosition(category.x, category.y);
-            category = _categories.Find(c => c.name == itemDivineOrb.category);
-            itemDivineOrb.categoryCoord = _colorUtil.GetPixelPosition(category.x, category.y);
-
-            for (int i = 0; i < (int)_items.Count; i++)
-            {
-                TradeItem tradeItem = _items[i];
-                category = _categories.Find(c => c.name == tradeItem.category);
-                if (category != null)
-                {
-                    tradeItem.categoryCoord = _colorUtil.GetPixelPosition(category.x, category.y);
-                }
-                else
-                {
-                    throw new Exception("Category not found for item: " + tradeItem.name);
-                }
-            }
+            List<(int, string)> items = GetItemList();
 
             // Here is where the check script begin
             // Select something on both side so the popular category show up
@@ -220,38 +202,42 @@ namespace POE2FlipTool.Modules
             {
                 ClickHave(itemDivineOrb);
                 ClickWant(itemExaltedOrb);
-                ScreenShotAndUpdateGoogleSheet(itemExaltedOrb, "B1");
+                ScreenShotAndUpdateGoogleSheet(itemExaltedOrb, "B2");
             }
 
             // Update div -> chaos value
             if (_main.ShouldCheckChaos())
             {
                 ClickWant(itemChaosOrb);
-                ScreenShotAndUpdateGoogleSheet(itemChaosOrb, "B2");
+                ScreenShotAndUpdateGoogleSheet(itemChaosOrb, "B3");
             }
 
             // Go through each trade item and update trading value
-            for(int i = 0; i < _items.Count; i++)
+            foreach (var (row, value) in items)
             {
-                TradeItem tradeItem = _items[i];
+                if (value.Contains("!!") || value.Length <= 0)
+                {
+                    continue;
+                }
 
+                var tradeItem = new TradeItem(value, row);
                 // The code below is not inversed. For example, if we want to sell for divine
                 // We search for "I want tradeItem" and "I have divine" to get the lowest price
                 // someone else are willing to sell. That means we can sell around that price to.
                 ClickHave(itemDivineOrb);
                 ClickWant(tradeItem);
-                ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + SELL_FOR_DIVINE_Y, true);
+                ScreenShotAndUpdateGoogleSheet(tradeItem, SELL_FOR_DIVINE_Y + tradeItem.row, true);
 
                 if (_main.ShouldCheckExalt())
                 {
                     ClickHave(itemExaltedOrb);
-                    ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + SELL_FOR_EXALT_Y, true);
+                    ScreenShotAndUpdateGoogleSheet(tradeItem, SELL_FOR_EXALT_Y + tradeItem.row, true);
                 }
 
                 if (_main.ShouldCheckChaos())
                 {
                     ClickHave(itemChaosOrb);
-                    ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + SELL_FOR_CHAOS_Y, true);
+                    ScreenShotAndUpdateGoogleSheet(tradeItem, SELL_FOR_CHAOS_Y + tradeItem.row, true);
                 }
 
 
@@ -260,17 +246,17 @@ namespace POE2FlipTool.Modules
                 if (_main.ShouldCheckExalt())
                 {
                     ClickWant(itemExaltedOrb);
-                    ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + BUY_WITH_EXALT_Y);
+                    ScreenShotAndUpdateGoogleSheet(tradeItem, BUY_WITH_EXALT_Y + tradeItem.row);
                 }
 
                 if (_main.ShouldCheckChaos())
                 {
                     ClickWant(itemChaosOrb);
-                    ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + BUY_WITH_CHAOS_Y);
+                    ScreenShotAndUpdateGoogleSheet(tradeItem, BUY_WITH_CHAOS_Y + tradeItem.row);
                 }
 
                 ClickWant(itemDivineOrb);
-                ScreenShotAndUpdateGoogleSheet(tradeItem, tradeItem.column + BUY_WITH_DIVINE_Y);
+                ScreenShotAndUpdateGoogleSheet(tradeItem, BUY_WITH_DIVINE_Y + tradeItem.row);
             }
         }
 
@@ -280,7 +266,8 @@ namespace POE2FlipTool.Modules
         {
             MoveMouse(_iWantPoint.X, _iWantPoint.Y);
             SendLeftClick();
-            MoveMouse(want.categoryCoord.X, want.categoryCoord.Y);
+            Point catAll = _colorUtil.GetPixelPosition(CATEGORY_ALL_X, CATEGORY_ALL_Y);
+            MoveMouse(catAll.X, catAll.Y);
             SendLeftClick();
             MoveMouse(_regexPoint.X, _regexPoint.Y);
             SendLeftClick();
@@ -293,7 +280,8 @@ namespace POE2FlipTool.Modules
         {
             MoveMouse(_iHavePoint.X, _iHavePoint.Y);
             SendLeftClick();
-            MoveMouse(have.categoryCoord.X, have.categoryCoord.Y + _categoryHaveOffsetY);
+            Point catAll = _colorUtil.GetPixelPosition(CATEGORY_ALL_X, CATEGORY_ALL_Y);
+            MoveMouse(catAll.X, catAll.Y);
             SendLeftClick();
             MoveMouse(_regexPoint.X, _regexPoint.Y);
             SendLeftClick();
@@ -324,7 +312,7 @@ namespace POE2FlipTool.Modules
         {
             _commandQueue.Enqueue(new ActionCommand(() => Clipboard.SetText(name)));
             _commandQueue.Enqueue(new ActionCommand(() => _inputHook.PressKey(Keys.V, true)));
-            _commandQueue.Enqueue(new DelayCommand(DELAY_BETWEEN_ACTION_SHORT));
+            _commandQueue.Enqueue(new DelayCommand(DELAY_BETWEEN_ACTION_LONG));
         }
 
         
@@ -363,13 +351,13 @@ namespace POE2FlipTool.Modules
             }
             else
             {
-                throw new FormatException("Invalid text: " + result);
+                return "=1/1";
             }
 
             string[] parts = result.Split(result[splitIndex]);
             if (parts.Length != 2)
             {
-                throw new FormatException("Invalid text: " + result);
+                return "=1/1";
             }
 
 
@@ -378,7 +366,7 @@ namespace POE2FlipTool.Modules
 
             if ((right == 0 && !reverse) || (left == 0 && reverse))
             {
-                throw new DivideByZeroException();
+                return "=1/1";
             }
 
             string ratioString = "=" + (reverse ? (right + "/" + left) : (left + "/" + right));
