@@ -83,3 +83,13 @@ Assets/Plugins/Android/*.jar.meta
 *.orig.meta
 /Assets/FR2_Cache.asset
 /ProjectSettings/ProjectVersion.txt
+
+# Google service account key - never commit
+/google_service.json
+/data/google_service.json
+
+# Price history CSVs written by the tool
+/history/
+
+# Cached GGG / poe.ninja API data
+/cache/

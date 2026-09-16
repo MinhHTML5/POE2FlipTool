@@ -35,6 +35,11 @@ namespace POE2FlipTool.Modules
 
         public void UpdateCell(string cell, object value)
         {
+            if (value is string text && text == "~")
+            {
+                return;
+            }
+
             // Define request parameters.
             var range = $"{_sheetName}!{cell}";
             var valueRange = new Google.Apis.Sheets.v4.Data.ValueRange
@@ -57,6 +62,29 @@ namespace POE2FlipTool.Modules
                 return values[0][0].ToString();
             }
             return null;
+        }
+
+        /// <summary>
+        /// Reads a rectangular range (e.g. "A1:B") and returns one entry per row with the raw cell values.
+        /// Numbers come back unformatted so "1,000.00" is returned as 1000, not as text.
+        /// Rows are 1-based sheet rows; short rows are padded with nulls to the widest row.
+        /// </summary>
+        public List<(int Row, IList<object> Cells)> GetRows(string rangeA1)
+        {
+            var range = $"{_sheetName}!{rangeA1}";
+            var request = _service.Spreadsheets.Values.Get(_spreadsheetId, range);
+            request.ValueRenderOption = SpreadsheetsResource.ValuesResource.GetRequest.ValueRenderOptionEnum.UNFORMATTEDVALUE;
+            var response = request.Execute();
+
+            var result = new List<(int Row, IList<object> Cells)>();
+            if (response.Values == null)
+                return result;
+
+            for (int i = 0; i < response.Values.Count; i++)
+            {
+                result.Add((i + 1, response.Values[i]));
+            }
+            return result;
         }
 
         public List<(int, string)> GetValueFromColumn(string column)

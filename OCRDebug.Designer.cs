@@ -30,7 +30,6 @@
         {
             pctOCRDebug = new PictureBox();
             btnCorrect = new Button();
-            btnWrong = new Button();
             lblOCRDebug = new Label();
             lblItemName = new Label();
             ((System.ComponentModel.ISupportInitialize)pctOCRDebug).BeginInit();
@@ -41,7 +40,7 @@
             pctOCRDebug.BorderStyle = BorderStyle.FixedSingle;
             pctOCRDebug.Location = new Point(8, 27);
             pctOCRDebug.Name = "pctOCRDebug";
-            pctOCRDebug.Size = new Size(263, 52);
+            pctOCRDebug.Size = new Size(208, 52);
             pctOCRDebug.SizeMode = PictureBoxSizeMode.CenterImage;
             pctOCRDebug.TabIndex = 0;
             pctOCRDebug.TabStop = false;
@@ -49,34 +48,23 @@
             // btnCorrect
             // 
             btnCorrect.BackColor = Color.FromArgb(192, 255, 192);
-            btnCorrect.Location = new Point(8, 85);
+            btnCorrect.Location = new Point(142, 87);
             btnCorrect.Name = "btnCorrect";
             btnCorrect.Size = new Size(74, 27);
             btnCorrect.TabIndex = 2;
-            btnCorrect.Text = "Correct";
+            btnCorrect.Text = "Dismiss";
             btnCorrect.UseVisualStyleBackColor = false;
             btnCorrect.Click += btnCorrect_Click;
-            // 
-            // btnWrong
-            // 
-            btnWrong.BackColor = Color.FromArgb(255, 192, 192);
-            btnWrong.Location = new Point(197, 85);
-            btnWrong.Name = "btnWrong";
-            btnWrong.Size = new Size(74, 27);
-            btnWrong.TabIndex = 3;
-            btnWrong.Text = "Wrong";
-            btnWrong.UseVisualStyleBackColor = false;
-            btnWrong.Click += btnWrong_Click;
             // 
             // lblOCRDebug
             // 
             lblOCRDebug.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            lblOCRDebug.Location = new Point(168, 1);
+            lblOCRDebug.Location = new Point(8, 85);
             lblOCRDebug.Name = "lblOCRDebug";
             lblOCRDebug.Size = new Size(103, 23);
             lblOCRDebug.TabIndex = 1;
             lblOCRDebug.Text = "263:1";
-            lblOCRDebug.TextAlign = ContentAlignment.MiddleRight;
+            lblOCRDebug.TextAlign = ContentAlignment.MiddleLeft;
             // 
             // lblItemName
             // 
@@ -94,12 +82,11 @@
             AutoScaleMode = AutoScaleMode.Font;
             BorderStyle = BorderStyle.FixedSingle;
             Controls.Add(lblItemName);
-            Controls.Add(btnWrong);
             Controls.Add(btnCorrect);
             Controls.Add(lblOCRDebug);
             Controls.Add(pctOCRDebug);
             Name = "OCRDebug";
-            Size = new Size(278, 117);
+            Size = new Size(222, 117);
             ((System.ComponentModel.ISupportInitialize)pctOCRDebug).EndInit();
             ResumeLayout(false);
         }
@@ -108,7 +95,6 @@
 
         private PictureBox pctOCRDebug;
         private Button btnCorrect;
-        private Button btnWrong;
         private Label lblOCRDebug;
         private Label lblItemName;
     }
