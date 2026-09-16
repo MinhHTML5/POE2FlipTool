@@ -278,6 +278,14 @@ namespace POE2FlipTool.Modules
 
         private void FinishReading(ItemReading reading)
         {
+            // A failed buy read takes this run's sell value of the same currency (and vice versa).
+            // The borrowed value also goes to the sheet cell that the failed read left untouched.
+            foreach (PriceField borrowed in reading.BorrowMissingPairValues())
+            {
+                double value = reading.Get(borrowed)!.Value;
+                _googleSheetUpdater.UpdateCell(PriceFields.SheetColumn(borrowed) + reading.Row, value.ToString(CultureInfo.InvariantCulture));
+            }
+
             bool readAnything = PriceFields.All.Any(f => reading.Get(f).HasValue);
 
             reading.Timestamp = DateTime.Now;

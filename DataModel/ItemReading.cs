@@ -30,6 +30,26 @@ namespace POE2FlipTool.DataModel
             }
         }
 
+        public static bool IsSell(PriceField field)
+        {
+            return field == PriceField.SellForDiv || field == PriceField.SellForEx || field == PriceField.SellForChaos;
+        }
+
+        /// <summary>The other side of the same currency pair: sell-for-X &lt;-&gt; buy-with-X.</summary>
+        public static PriceField Counterpart(PriceField field)
+        {
+            switch (field)
+            {
+                case PriceField.SellForDiv: return PriceField.BuyWithDiv;
+                case PriceField.BuyWithDiv: return PriceField.SellForDiv;
+                case PriceField.SellForEx: return PriceField.BuyWithEx;
+                case PriceField.BuyWithEx: return PriceField.SellForEx;
+                case PriceField.SellForChaos: return PriceField.BuyWithChaos;
+                case PriceField.BuyWithChaos: return PriceField.SellForChaos;
+                default: throw new ArgumentOutOfRangeException(nameof(field));
+            }
+        }
+
         /// <summary>Header text, same wording as the sheet.</summary>
         public static string Header(PriceField field)
         {
@@ -128,6 +148,28 @@ namespace POE2FlipTool.DataModel
         public bool HasAllPrices()
         {
             return PriceFields.All.All(f => Get(f).HasValue);
+        }
+
+        /// <summary>
+        /// Within one scan, a buy price that could not be read takes the value of the sell price of the same
+        /// currency when that one was read, and vice versa. Pairs where neither side was read are left alone.
+        /// Returns the fields that were filled this way.
+        /// </summary>
+        public List<PriceField> BorrowMissingPairValues()
+        {
+            var borrowed = new List<PriceField>();
+            foreach (PriceField sell in new[] { PriceField.SellForDiv, PriceField.SellForEx, PriceField.SellForChaos })
+            {
+                PriceField buy = PriceFields.Counterpart(sell);
+                double? sellValue = Get(sell);
+                double? buyValue = Get(buy);
+                if (sellValue.HasValue == buyValue.HasValue) continue;
+
+                PriceField target = sellValue.HasValue ? buy : sell;
+                Set(target, sellValue ?? buyValue);
+                borrowed.Add(target);
+            }
+            return borrowed;
         }
 
         /// <summary>Copies every price that is still null here from <paramref name="older"/>.</summary>

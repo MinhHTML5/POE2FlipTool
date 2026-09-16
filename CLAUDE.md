@@ -62,6 +62,9 @@ profit -> CSV append -> `PriceBoard.Apply` (merge, keep old values for unread fi
   `left/right`. Unreadable (no `:`/non-numeric/zero on either side) -> `null`. Contract for a null read:
   the store callback is not called (board keeps the previous value), the sheet cell is not written,
   the CSV cell is blank (or no row at all if nothing was read), and "Last read" does not move.
+  Exception: in `FinishReading`, if one side of a currency pair was read this run and the other was not,
+  the missing side borrows the read value (`ItemReading.BorrowMissingPairValues`) and that value is
+  written to its sheet cell as a plain number.
 - `ActionCommand` marks itself done *before* running so a throwing step is skipped rather than retried
   forever. Keep it that way.
 - Delay constants in `PricingChecker` are tuned by hand by the owner; don't "normalise" them.
