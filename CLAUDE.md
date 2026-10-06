@@ -31,10 +31,10 @@ dotnet build POE2FlipTool.csproj
 | `Modules/PriceHistoryWriter.cs` | Append/read `history/<poe>/prices_YYYY-MM-DD.csv`. Columns matched by header name. |
 | `Modules/GoogleSheetUpdater.cs` | Sheets API v4 via service account. `UpdateCell` is fire-and-forget and skips the `"~"` sentinel. |
 | `Modules/LeagueService.cs` | League list from `pathofexile.com/api/trade[2]/data/leagues`, fallback to exchange digest. |
-| `Modules/ExchangeVolumeService.cs` | GGG hourly currency-exchange digest, cached, at most one call per hour. |
+| `Modules/ExchangeVolumeService.cs` | GGG hourly currency-exchange digests: one cache file per hour (`cache/<poe>/exchange/<hour>.json`, volume + lowest/highest ratio), refresh at most once per hour, backfills every closed hour since the last cached one capped at 24, keeps 72 h. Also serves min/max hourly prices for the chart. |
 | `Modules/ItemNameResolver.cs` | Metadata id <-> display name, cached; poe.ninja first, RePoE dump second. |
 | `Modules/PoeHttp.cs` | Shared `HttpClient` (User-Agent required by GGG), reference currency ids, cache dir. |
-| `Charts/` | `PriceChartForm` + `DayChartControl`: GDI+ day chart per item (no chart library). |
+| `Charts/` | `PriceChartForm` + `DayChartControl`: GDI+ day chart per item (no chart library). Plots GGG hourly min/max prices (not OCR readings); empty-day / league-not-started cases show a message instead of lines. |
 | `Utilities/` | OCR (template match against `data/ocrSample/*.png`), raw input hook, screen coords. |
 | `OCRDebug.*` | Card shown per OCR read in the "OCR History" panel. Dismiss only; no error saving. |
 
@@ -74,9 +74,13 @@ profit -> CSV append -> `PriceBoard.Apply` (merge, keep old values for unread fi
 - Leagues: `https://www.pathofexile.com/api/trade/data/leagues` (PoE1, filter `realm == "pc"`),
   `.../api/trade2/data/leagues` (PoE2, `realm == "poe2"`). First entry = current challenge league.
   The legacy `/api/leagues` ignores `realm=poe2`; `api.pathofexile.com/league` needs OAuth. Don't use them.
-- Volume: `https://web.poecdn.com/api/currency-exchange[/poe2]/<unix hour>`; only closed hours have data,
-  ~2.4 MB per hour for PoE2, every league in one response. Ids are metadata paths
+- Volume/prices: `https://web.poecdn.com/api/currency-exchange[/poe2]/<unix hour>`; only closed hours have
+  data, ~2.4 MB per hour for PoE2, every league in one response. Ids are metadata paths
   (`Metadata/Items/Currency/CurrencyModValues` = Divine). Divine/Exalted/Chaos ids are identical in both games.
+  `lowest_ratio`/`highest_ratio` are `{itemA: n, itemB: m}` pairs; price per item = other side / item side,
+  then take min/max of the two. A league that started mid-day simply has no market rows for earlier hours.
+  First start with an empty cache downloads up to 24 hours (~60 MB); the once-per-hour attempt stamp is
+  written before fetching so a crash cannot cause a retry storm.
 - Names: poe.ninja `/{poe1|poe2}/api/economy/exchange/current/overview?league=&type=` (type is required;
   valid lists are in `ItemNameResolver`). It has no metadata ids and its icon stems are ambiguous across
   tiers, so it resolves only a few dozen ids; RePoE `https://repoe-fork.github.io[/poe2]/base_items.min.json`

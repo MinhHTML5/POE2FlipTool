@@ -20,18 +20,35 @@ namespace POE2FlipTool.Charts
         }
     }
 
+    /// <summary>A shaded band between a low and a high value over time, drawn behind the lines.</summary>
+    public class ChartBand
+    {
+        public Color Color { get; }
+        public List<(DateTime Time, double Low, double High)> Points { get; }
+
+        public ChartBand(Color color, List<(DateTime Time, double Low, double High)> points)
+        {
+            Color = color;
+            Points = points;
+        }
+    }
+
     /// <summary>A stacked panel with its own Y axis. All panels share the day-long X axis.</summary>
     public class ChartPanel
     {
         public string Title { get; }
         public Color Color { get; }
         public List<ChartSeries> Series { get; }
+        public List<ChartBand> Bands { get; }
+        /// <summary>Shown centred in the panel when it has no data; null uses the default wording.</summary>
+        public string? EmptyMessage { get; set; }
 
-        public ChartPanel(string title, Color color, List<ChartSeries> series)
+        public ChartPanel(string title, Color color, List<ChartSeries> series, List<ChartBand>? bands = null)
         {
             Title = title;
             Color = color;
             Series = series;
+            Bands = bands ?? new List<ChartBand>();
         }
     }
 
@@ -70,6 +87,9 @@ namespace POE2FlipTool.Charts
 
         /// <summary>Fired with a description of the hovered point, or an empty string when nothing is hovered.</summary>
         public event Action<string>? HoverTextChanged;
+
+        /// <summary>Formats a point's time for tooltips and hover text. Default: HH:mm:ss.</summary>
+        public Func<DateTime, string> TimeLabel { get; set; } = t => t.ToString("HH:mm:ss");
 
         public DayChartControl()
         {
@@ -145,11 +165,13 @@ namespace POE2FlipTool.Charts
                 }
             }
 
-            var values = panel.Series.SelectMany(s => s.Points).Select(p => p.Value).ToList();
+            var values = panel.Series.SelectMany(s => s.Points).Select(p => p.Value)
+                .Concat(panel.Bands.SelectMany(b => b.Points).SelectMany(p => new[] { p.Low, p.High }))
+                .ToList();
             if (values.Count == 0)
             {
                 g.DrawRectangle(framePen, plot);
-                string msg = "No " + panel.Title.ToLowerInvariant() + " readings on " + Day.ToString("yyyy-MM-dd");
+                string msg = panel.EmptyMessage ?? ("No " + panel.Title.ToLowerInvariant() + " data on " + Day.ToString("yyyy-MM-dd"));
                 SizeF size = g.MeasureString(msg, _labelFont);
                 g.DrawString(msg, _labelFont, Brushes.Gray, plot.Left + (plot.Width - size.Width) / 2, plot.Top + (plot.Height - size.Height) / 2);
                 return;
@@ -170,6 +192,7 @@ namespace POE2FlipTool.Charts
                 min -= pad;
                 max += pad;
             }
+            if (values.Min() >= 0 && min < 0) min = 0; // prices are never negative; don't pad below zero
             double step = NiceStep((max - min) / 4);
             double y0 = Math.Floor(min / step) * step;
             double y1 = Math.Ceiling(max / step) * step;
@@ -187,6 +210,20 @@ namespace POE2FlipTool.Charts
                 }
             }
             g.DrawRectangle(framePen, plot);
+
+            // Bands: shaded area between low and high, behind the lines
+            foreach (var band in panel.Bands)
+            {
+                var ordered = band.Points.OrderBy(p => p.Time).ToList();
+                if (ordered.Count < 2) continue;
+
+                var polygon = new List<PointF>();
+                foreach (var p in ordered) polygon.Add(new PointF(XFor(plot, p.Time), YFor(plot, p.High, y0, y1)));
+                for (int i = ordered.Count - 1; i >= 0; i--) polygon.Add(new PointF(XFor(plot, ordered[i].Time), YFor(plot, ordered[i].Low, y0, y1)));
+
+                using var fill = new SolidBrush(Color.FromArgb(40, band.Color));
+                g.FillPolygon(fill, polygon.ToArray());
+            }
 
             // Series: line through the points in time order, plus a dot per reading
             foreach (var series in panel.Series)
@@ -214,7 +251,7 @@ namespace POE2FlipTool.Charts
             using var ring = new Pen(hit.Series.Color, 2f);
             g.DrawEllipse(ring, hit.Pixel.X - 6, hit.Pixel.Y - 6, 12, 12);
 
-            string text = hit.Time.ToString("HH:mm:ss") + "  " + hit.Series.Name + ": " + hit.Value.ToString(VALUE_FORMAT, CultureInfo.InvariantCulture);
+            string text = TimeLabel(hit.Time) + "  " + hit.Series.Name + ": " + hit.Value.ToString(VALUE_FORMAT, CultureInfo.InvariantCulture);
             SizeF size = g.MeasureString(text, _labelFont);
             float x = hit.Pixel.X + 10;
             float y = hit.Pixel.Y - size.Height - 8;
@@ -252,7 +289,7 @@ namespace POE2FlipTool.Charts
                 Invalidate();
                 HoverTextChanged?.Invoke(nearest == null
                     ? ""
-                    : nearest.Time.ToString("yyyy-MM-dd HH:mm:ss") + "   " + nearest.Series.Name + " = " + nearest.Value.ToString(VALUE_FORMAT, CultureInfo.InvariantCulture));
+                    : nearest.Time.ToString("yyyy-MM-dd") + " " + TimeLabel(nearest.Time) + "   " + nearest.Series.Name + " = " + nearest.Value.ToString(VALUE_FORMAT, CultureInfo.InvariantCulture));
             }
         }
 

@@ -1,12 +1,12 @@
-using POE2FlipTool.DataModel;
 using POE2FlipTool.Modules;
 
 namespace POE2FlipTool.Charts
 {
     /// <summary>
-    /// Shows how one item's prices moved over a single day, read from the history CSVs.
-    /// Three stacked panels share the 00:00 - 23:59 axis: Exalt (green), Chaos (red), Divine (purple).
-    /// Solid line = what you get when selling the item, dashed = what you pay when buying it.
+    /// Shows how one item's price moved over a single day, from GGG's hourly currency-exchange digests
+    /// (cached by <see cref="ExchangeVolumeService"/>). Three stacked panels share the 00:00 - 23:59 axis:
+    /// Exalt (green), Chaos (red), Divine (purple). For every cached hour the highest price is drawn solid,
+    /// the lowest dashed, with the range between them shaded.
     /// </summary>
     public class PriceChartForm : Form
     {
@@ -15,18 +15,22 @@ namespace POE2FlipTool.Charts
         public static readonly Color DIVINE_COLOR = Color.FromArgb(130, 0, 170);
 
         private readonly string _itemName;
-        private readonly PriceHistoryWriter _history;
+        private readonly ExchangeVolumeService _volume;
+        private readonly ItemNameResolver _names;
+        private readonly string? _league;
 
         private readonly DateTimePicker _datePicker;
         private readonly DayChartControl _chart;
         private readonly Label _lblStatus;
 
-        public PriceChartForm(string itemName, DateTime day, PriceHistoryWriter history)
+        public PriceChartForm(string itemName, DateTime day, ExchangeVolumeService volume, ItemNameResolver names, string? league)
         {
             _itemName = itemName;
-            _history = history;
+            _volume = volume;
+            _names = names;
+            _league = league;
 
-            Text = itemName + " - price over the day";
+            Text = itemName + " - hourly price (GGG exchange data)";
             StartPosition = FormStartPosition.CenterParent;
             Size = new Size(1000, 760);
             MinimumSize = new Size(640, 460);
@@ -42,7 +46,7 @@ namespace POE2FlipTool.Charts
             };
             var lblItem = new Label
             {
-                Text = itemName,
+                Text = itemName + (league == null ? "" : "  -  " + league),
                 Font = new Font("Segoe UI", 12F, FontStyle.Bold),
                 AutoSize = true,
                 Margin = new Padding(0, 3, 16, 0),
@@ -59,7 +63,7 @@ namespace POE2FlipTool.Charts
             var btnRefresh = new Button { Text = "Refresh", Width = 70, Height = 25, Margin = new Padding(0, 1, 16, 0) };
             var lblHint = new Label
             {
-                Text = "Solid = sell price, dashed = buy price. Hover a point for details.",
+                Text = "One point per hour. Solid = highest price of the hour, dashed = lowest, shaded = range. Hover for details.",
                 ForeColor = Color.Gray,
                 AutoSize = true,
                 Margin = new Padding(0, 6, 0, 0),
@@ -67,7 +71,12 @@ namespace POE2FlipTool.Charts
             top.Controls.AddRange(new Control[] { lblItem, btnPrev, _datePicker, btnNext, btnRefresh, lblHint });
 
             // --- chart + status ----------------------------------------------------------------
-            _chart = new DayChartControl { Dock = DockStyle.Fill };
+            _chart = new DayChartControl
+            {
+                Dock = DockStyle.Fill,
+                // points sit at the middle of their hour; describe the hour they summarise
+                TimeLabel = t => t.AddMinutes(-30).ToString("HH:mm") + "-" + t.AddMinutes(30).ToString("HH:mm"),
+            };
             _lblStatus = new Label
             {
                 Dock = DockStyle.Bottom,
@@ -95,64 +104,80 @@ namespace POE2FlipTool.Charts
             LoadDay();
         }
 
-        private List<HistoryRecord> _records = new List<HistoryRecord>();
+        private string _summary = "";
 
         private void LoadDay()
         {
             DateTime day = _datePicker.Value.Date;
-            try
-            {
-                _records = _history.ReadDay(day)
-                    .Where(r => r.Reading.Name == _itemName)
-                    .OrderBy(r => r.Reading.Timestamp)
-                    .ToList();
-            }
-            catch (Exception ex)
-            {
-                _records = new List<HistoryRecord>();
-                _lblStatus.Text = "Could not read history: " + ex.Message;
-            }
+            string? itemId = _names.TryGetId(_itemName);
+            List<long> hoursCached = _volume.HoursCachedOn(day);
+            List<long> hoursWithLeague = _league == null ? new List<long>() : _volume.HoursWithLeagueOn(_league, day);
+
+            // Work out the one message that explains an empty chart, if any.
+            string? problem = null;
+            if (_league == null) problem = "No league selected (league list unavailable).";
+            else if (itemId == null) problem = "'" + _itemName + "' could not be mapped to a GGG item id, so there is no exchange data for it.";
+            else if (hoursCached.Count == 0) problem = "No exchange data cached for " + day.ToString("yyyy-MM-dd") + ". The tool keeps the last " + ExchangeVolumeService.RETENTION_HOURS + " hours and fetches at most " + ExchangeVolumeService.DEFAULT_MAX_BACKFILL_HOURS + " hours per start.";
+            else if (hoursWithLeague.Count == 0) problem = "No '" + _league + "' markets in any cached hour of " + day.ToString("yyyy-MM-dd") + ": the league did not exist yet, or has no exchange activity.";
 
             _chart.Day = day;
             _chart.Panels = new List<ChartPanel>
             {
-                BuildPanel("Exalt", EXALT_COLOR, PriceField.SellForEx, PriceField.BuyWithEx),
-                BuildPanel("Chaos", CHAOS_COLOR, PriceField.SellForChaos, PriceField.BuyWithChaos),
-                BuildPanel("Divine", DIVINE_COLOR, PriceField.SellForDiv, PriceField.BuyWithDiv),
+                BuildPanel("Exalt", EXALT_COLOR, itemId, PoeHttp.EXALTED_ID, day, problem),
+                BuildPanel("Chaos", CHAOS_COLOR, itemId, PoeHttp.CHAOS_ID, day, problem),
+                BuildPanel("Divine", DIVINE_COLOR, itemId, PoeHttp.DIVINE_ID, day, problem),
             };
             _chart.Invalidate();
+
+            if (problem != null)
+            {
+                _summary = problem;
+            }
+            else
+            {
+                DateTime first = ExchangeVolumeService.HourStartLocal(hoursWithLeague.First());
+                DateTime last = ExchangeVolumeService.HourStartLocal(hoursWithLeague.Last()).AddHours(1);
+                _summary = hoursWithLeague.Count + " of 24 hours available for " + day.ToString("yyyy-MM-dd")
+                    + " (" + first.ToString("HH:mm") + " - " + last.ToString("HH:mm") + ")";
+                if (hoursWithLeague.Count < hoursCached.Count)
+                {
+                    _summary += "; '" + _league + "' has no markets before " + first.ToString("HH:mm") + " (league not started yet)";
+                }
+            }
             ShowSummary();
         }
 
-        private ChartPanel BuildPanel(string title, Color color, PriceField sellField, PriceField buyField)
+        private ChartPanel BuildPanel(string title, Color color, string? itemId, string currencyId, DateTime day, string? problem)
         {
-            return new ChartPanel(title, color, new List<ChartSeries>
-            {
-                new ChartSeries(PriceFields.Header(sellField), color, dashed: false, SeriesPoints(sellField)),
-                new ChartSeries(PriceFields.Header(buyField), color, dashed: true, SeriesPoints(buyField)),
-            });
-        }
+            var high = new List<(DateTime Time, double Value)>();
+            var low = new List<(DateTime Time, double Value)>();
+            var band = new List<(DateTime Time, double Low, double High)>();
 
-        private List<(DateTime Time, double Value)> SeriesPoints(PriceField field)
-        {
-            return _records
-                .Where(r => r.Reading.Get(field).HasValue)
-                .Select(r => (r.Reading.Timestamp, r.Reading.Get(field)!.Value))
-                .ToList();
+            if (problem == null && itemId != null && _league != null)
+            {
+                foreach (HourlyPricePoint p in _volume.GetPairHistory(_league, itemId, currencyId, day))
+                {
+                    DateTime mid = p.HourStartLocal.AddMinutes(30);
+                    high.Add((mid, p.MaxPrice));
+                    low.Add((mid, p.MinPrice));
+                    band.Add((mid, p.MinPrice, p.MaxPrice));
+                }
+            }
+
+            string unit = title.ToLowerInvariant();
+            var panel = new ChartPanel(title, color, new List<ChartSeries>
+            {
+                new ChartSeries("Highest " + unit + " per item", color, dashed: false, high),
+                new ChartSeries("Lowest " + unit + " per item", color, dashed: true, low),
+            }, new List<ChartBand> { new ChartBand(color, band) });
+
+            panel.EmptyMessage = problem ?? ("No " + _itemName + " <-> " + title + " trades in the cached hours of " + day.ToString("yyyy-MM-dd"));
+            return panel;
         }
 
         private void ShowSummary()
         {
-            DateTime day = _datePicker.Value.Date;
-            if (_records.Count == 0)
-            {
-                _lblStatus.Text = "No readings for " + _itemName + " on " + day.ToString("yyyy-MM-dd") + ".";
-            }
-            else
-            {
-                _lblStatus.Text = _records.Count + " readings on " + day.ToString("yyyy-MM-dd")
-                    + "  (" + _records.First().Reading.Timestamp.ToString("HH:mm") + " - " + _records.Last().Reading.Timestamp.ToString("HH:mm") + ")";
-            }
+            _lblStatus.Text = _summary;
         }
     }
 }

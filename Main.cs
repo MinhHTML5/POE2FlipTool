@@ -621,7 +621,7 @@ namespace POE2FlipTool
             if (dgvPrices.Columns[e.ColumnIndex].Name != COL_ITEM) return;
             if (dgvPrices.Rows[e.RowIndex].Tag is not ItemReading item) return;
 
-            var chart = new PriceChartForm(item.Name, DateTime.Today, _history);
+            var chart = new PriceChartForm(item.Name, DateTime.Today, _volume, _itemNames, SelectedLeague);
             chart.Show(this);
         }
 

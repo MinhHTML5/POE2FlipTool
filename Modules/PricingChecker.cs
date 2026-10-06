@@ -94,8 +94,8 @@ namespace POE2FlipTool.Modules
 
         public const int DELAY_BETWEEN_ACTION_SHORT = 25;
         public const int DELAY_BETWEEN_ACTION_LONG = 75;
-        public const int DELAY_BEFORE_SCREENSHOT_SHORT = 200;
-        public const int DELAY_BEFORE_SCREENSHOT_LONG = 600;
+        public const int DELAY_BEFORE_SCREENSHOT_SHORT = 100;
+        public const int DELAY_BEFORE_SCREENSHOT_LONG = 400;
 
         public PointF OCR_TOP = new PointF(0.4692f, 0.17222223f);
         public PointF OCR_BOTTOM = new PointF(0.5338f, 0.192f);
@@ -305,9 +305,9 @@ namespace POE2FlipTool.Modules
         {
             MoveMouse(_iWantPoint.X, _iWantPoint.Y);
             SendLeftClick();
-            Point catAll = _colorUtil.GetPixelPosition(CATEGORY_ALL_X, CATEGORY_ALL_Y);
-            MoveMouse(catAll.X, catAll.Y);
-            SendLeftClick();
+            //Point catAll = _colorUtil.GetPixelPosition(CATEGORY_ALL_X, CATEGORY_ALL_Y);
+            //MoveMouse(catAll.X, catAll.Y);
+            //SendLeftClick();
             MoveMouse(_regexPoint.X, _regexPoint.Y);
             SendLeftClick();
             TypeItemName(want.name);
